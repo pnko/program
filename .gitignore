@@ -1,7 +1,7 @@
 # 제외 폴더
 .idea/
 MS_VS/
-
+.ipynb_checkpoints/
 #제외 파일
 *.bak
 

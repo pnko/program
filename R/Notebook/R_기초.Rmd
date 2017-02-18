@@ -1,0 +1,70 @@
+---
+title: "R-Programming 기초"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+객체명 및 할당
+- 문자 a~z, A~Z와 숫자 0-9 그리고 '.'과 '_'조합으로 구성한다.
+- 첫 문자로 숫자와 '_'은 사용할 수 없다.
+- if, for, c, pi와 같은 R 프로그램의 명령어(예약어)는 사용할 수 없다.
+- 한글을 사용할 수 있다.
+- 대소문자를 구분한다.
+- 최대 256문자까지 사용하는 것이 가능하다.
+- 할당 연산자 : =, <- , ->
+
+# 1. 데이터 생성
+## 1. Vector
+: (숫자, 문자열 혹은 논리값 중의 한가지만 포함하며, 이들을 섞을 수 없다, 인덱스를 가진다.[2] 위치, 원소이름(속성)을 가진다 names), 1차원 객체
+기본사용법(c():combine함수)
+
+x <- c(0.5, 0.6)
+x <- c(TRUE, FALSE)
+x <- c(T, F)
+x <- c("a", "b", "c")
+x <- 9:29
+x <- c(1+0i, 2+4i)
+x <- vector("numeric", length=10) # 0 10개
+x <- vector("character", length=10) #"" 10개
+x <- vector("logical", length=10)  #FALSE 10개
+
+* 혼합(문자 > 숫자 > 논리)
+y <- c(1,7, "a") # 문자
+y <- c(TRUE, 2) # 숫자
+y <- c('a', TRUE) # 문자
+class(y) #Data Type 확인
+
+* 형 변환
+z <- 0:6
+as.numeric(z)
+as.logical(z) #0 false 1이상 true
+as.character(z)
+
+* Data 형 변환이 안될시 NA 값
+zz <- c("a", "b", "c")
+as.numeric(zz)
+as.logical(zz) 
+as.complex(zz)
+
+
+
+## 2. Matrices(행과 열이 되어 있는 데이터 형식), 2차원 객체
+
+```{r}
+m <- matrix(nrow=2, ncol=3) 
+m
+
+dim(m) 
+attributes(m) 
+
+m <- matrix(1:6, nrow=2, ncol=3)
+m <-1:10
+dim(m) <- c(2,5)
+m
+```
+
+
+
+
+
