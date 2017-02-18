@@ -4,6 +4,7 @@ MS_VS/
 .ipynb_checkpoints/
 #제외 파일
 *.bak
+*.R
 
 
 
