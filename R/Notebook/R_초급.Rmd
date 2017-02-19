@@ -1,0 +1,538 @@
+---
+title: "R 초급"
+output:
+  html_document: default
+---
+
+#1. 데이터 읽기
+- 작업디렉토리 설정 :
+getwd()
+setwd("G:\\etc\\R")
+
+- 작업디렉토리 하위에 폴더 생성 :
+if(!file.exists("data")){
+    dir.create("data")
+}
+
+- JAVA 환경변수 설정 :
+Sys.setenv(JAVA_HOME='C:\\Program Files\\Java\\jre8')
+options(java.parameters = "-Xmx8000m")
+
+- download.file : mode 속성 r(read),w(writing),a(appending), rb,wb,ad(binary mode, Windows) :
+다운 받을 경우 파일일 깨지는 경우가 있다(xlsx 등). mode=wb로 해야 정상적으로 데이터를 다운 받을 수 있다.
+
+
+
+##1. 데이터 다운로드 및 읽기
+###1. csv(데이터 다운로드, 읽기)
+```{r}
+#데이터 다운로드
+fileUrl <-"https://data.baltimorecity.gov/api/views/dz54-2aru/rows.csv?accessType=DOWNLOAD"
+download.file(fileUrl, destfile = "data/cameras.csv") # 맥 설정(https일 경우:method="curl" 속성 추가 )
+list.files("./data") # 작업디렉토리/data 에 파일 리스트 검색
+
+# read.table로 읽을 경우( sep= ","으로 구분하고 header 컬럼 표시 속성으로 정의)
+cameraData <- read.table("data/cameras.csv", sep =",", header=TRUE) #추가 속성(quote, na.strings, nrows, skip)
+head(cameraData)
+
+#read.csv로 읽을 경우(, 컬럼 표시 자동 적용)
+cameraData <- read.csv("data/cameras.csv")
+#head(cameraData)
+
+```
+
+
+###2. xlsx(데이터 다운로드, 읽기)
+```{r}
+#fileUrl <-"https://data.baltimorecity.gov/api/views/dz54-2aru/rows.xlsx?accessType=DOWNLOAD"
+#download.file(fileUrl, destfile = "data/cameras.xlsx", , mode="wb")
+#install.packages("xlsx")
+#library(xlsx)
+#cameraData <- read.xlsx("data/cameras.xlsx", sheetIndex=1, header=TRUE)
+#head(cameraData)
+
+#colIndex <- 2:3
+#rowIndex <- 1:4
+#cameraDataSubset <- read.xlsx("data/cameras.xlsx", sheetIndex=1,                              colIndex=colIndex, rowIndex=rowIndex)
+#cameraDataSubset
+
+```
+
+###3. xml(데이터 다운로드, 읽기)
+
+###4. Web페이지 읽기
+```{r}
+con = url("http://scholar.google.com/citations?user=HI-I6C0AAAAJ&hl=en")
+htmlCode = readLines(con)
+close(con)
+#head(htmlCode)
+
+library(XML)
+url <- ("http://scholar.google.com/citations?user=HI-I6C0AAAAJ&hl=en")
+html <- htmlTreeParse(url, useInternalNodes=T)
+xpathSApply(html, "//title", xmlValue)
+xpathSApply(html, "//td[@id='col-citedby']", xmlValue)
+
+```
+
+###5. Web페이지 xml 추출(데이터 다운로드, 읽기)
+```{r}
+fileUrl <- "http://espn.go.com/nfl/team/_/name/bal/baltimore-ravens"
+doc <- htmlTreeParse(fileUrl, useInternal=TRUE)
+#scores <- xpathSApply(doc, "//li[@class='score']", xmlValue)
+#teams <- xpathSApply(doc, "//li[@class='team-name']", xmlValue)
+#scores
+#teams
+
+```
+
+###6. JSON(데이터 다운로드, 읽기)
+#####참고 : http://www.r-bloggers.com/new-package-jsonlite-a-smarter-json-encoderdecoder/
+```{r}
+#install.packages("jsonlite")
+#library(jsonlite)
+#jsonData <- fromJSON("https://data.baltimorecity.gov/resource/8gms-s9we.json")
+#names(jsonData)
+#names(jsonData$owner)
+#jsonData$owner$login
+#myjson <- toJSON(iris, pretty=TRUE)
+#cat(myjson)
+#iris2 <- fromJSON(myjson)
+#head(iris2)
+
+```
+
+###7. Web페이지 일기 httr package(web Scraping)
+#### 참고 : http://cran.r-project.org/web/packages/httr/httr.pdf
+####http://www.r-bloggers.com/?s=Web+Scraping
+```{r}
+library(httr);
+library(XML)
+html2 = GET(url)
+content2 <- content(html2, as = "text") # http 텍스트 형태로 추출.
+parsedHtml <- htmlParse(content2, asText = TRUE) # 텍스트를 분석하여 html 형식 변환
+xpathSApply(parsedHtml, "//title", xmlValue)
+pg1 <- GET("http://httpbin.org/basic-auth/user/passwd") # 사용자 이름/비밀번호 필요할 경우. 인증이 안됨
+pg1
+pg2 <- GET("http://httpbin.org/basic-auth/user/passwd", # 사용자 이름 패드워드 입력
+          authenticate("user", "passwd"))
+pg2
+names(pg2)
+
+google <- handle("http://google.com")
+pg1 = GET(handle=google, path="/")
+pg2 = GET(handle=google, path="search")
+
+```
+
+
+##2.DBMS 읽기
+###1. MySQL 읽기(R 3.1.0 버전에서 설치가 안됨: 수동 설치해야 함.)
+install.packages("RMySQL")
+library(RMySQL) # 안돼
+
+
+###2. ODBC 읽기
+install.packages("RODBC")
+library(RODBC)
+channel <- odbcConnect(dsn="mysql", uid="root")
+tab <- sqlFetch(channel,'db')
+tab
+tab1 <- sqlQuery(channel,'select * from help_topic')
+tab2 <- sqlQuery(channel,'show databases')
+tab1[1:2]install.packages("RODBC")
+library(RODBC)
+channel <- odbcConnect(dsn="mysql", uid="root")
+tab <- sqlFetch(channel,'db')
+tab
+tab1 <- sqlQuery(channel,'select * from help_topic')
+tab2 <- sqlQuery(channel,'show databases')
+tab1[1:2]
+
+##3. HDF5(대용량 데이터 저장하는 패키지) 읽기
+####참고 : http://www.bioconductor.org/packages/release/bioc/vignettes/rhdf5/inst/doc/rhdf5.pdf
+
+
+##4. API 읽기
+###1.트위터 API
+- 참고 : 개발 계정 생성 :https://apps.twitter.com/
+- 참고 : 트위처API : https://dev.twitter.com/docs/api/1.1 
+- https://dev.twitter.com/docs/api/1/get/blocks/blocking   
+- https://dev.twitter.com/docs/api/1.1/get/statuses/home_timeline
+```{r}
+#myapp = oauth_app("twitter",
+#                  key = "ObWsGlJXn8LhgzreCG7X1vxEZ",
+#                  secret ="Swg26inPts65HQ5H0xD1YgS3sE7ttUuPfqOTzLkoBDHxk7gjRc")
+#sig = sign_oauth1.0(myapp,
+#                    token = "78240667-8P33MWCjyJsHDKbZzprUuSqKrSep47Jdo9tZijIHY",
+#                    token_secret = "SttYunrEE70e6VbeYxRh9KP3pmYWjpsBYRpeHyejbJJC3",
+#                    )
+
+#homeTL = GET("https://api.twitter.com/1.1/statuses/home_timeline.json", sig)
+#json1 = content(homeTL)
+#json2 = jsonlite::fromJSON(toJSON(json1))
+#json2[1,1:4]
+```
+
+
+##5. 기타 소스 읽기
+- 참고 : http://cran.r-project.org/web/packages/foreign/foreign.pdf
+- read.arff(Weka) ; read.dta(Stats); read.mtp(Minitab);
+- read.octave(Octave); read.spss(SPSS); read.xport(SAS)
+- RPostresSQL
+- https://code.google.com/p/rpostgresql/  , 
+- http://cran.r-project.org/web/packages/RPostgreSQL/RPostgreSQL.pdf
+####RODBC
+- http://cran.r-project.org/web/packages/RODBC/vignettes/RODBC.pdf
+- http://cran.r-project.org/web/packages/RODBC/RODBC.pdf
+####RMongo
+- http://cran.r-project.org/web/packages/RMongo/RMongo.pdf
+- http://www.r-bloggers.com/r-and-mongodb/
+- Reading images(jpeg,readbitmap,png,EBImage(Bioconductor))
+- Reading GIS Data(rdgal,rgeos, raster)
+- Reading music data(tuneR, seewave)
+
+
+#2. 데이터 변경
+####참고 :  http://www.biostat.jhsph.edu/~ajaffe/lec_winterR/Lecture%202.pdf
+```{r}
+X <- data.frame("var1"=sample(1:5), "var2"=sample(6:10), "var3"=sample(11:15))
+X <- X[sample(1:5),]; X$var2[c(1,3)]=NA
+```
+
+
+##1. Sorting And Ordering
+```{r}
+sort(X$var1)
+sort(X$var1, decreasing=TRUE)
+sort(X$var2, na.last=TRUE) # NA값은 마지막으로 정력
+
+# Ordering
+X[order(X$var1),] 
+X[order(X$var1, X$var3),]
+
+```
+
+
+##2. 데이터 요약 및 구조 변경
+```{r}
+#데이터 요약(Summarizing Data)
+fileUrl <-"https://data.baltimorecity.gov/api/views/k5ry-ef3g/rows.csv?accessType=DOWNLOAD"
+download.file(fileUrl, destfile="data/restaurants.csv")
+restData <- read.csv("data/restaurants.csv")
+head(restData, n=3) # 첫 3행
+tail(restData, n=3) # 마지막 3행
+summary(restData)
+str(restData)
+quantile(restData$councilDistrict, na.rm=TRUE)
+quantile(restData$councilDistrict, probs=c(0.5,0.75,0.9))
+table(restData$zipCode, useNA="ifany") #ZipCode의 갯수(NA일 경우 추가하라)
+table(restData$councilDistrict, restData$zipCode) #지구별, 코드
+
+#데이터 점검 Summary
+table(restData$zipCode %in% c("21212")) #해당 zipCode의 포함되는 수 표시
+table(restData$zipCode %in% c("21212","21213"))
+restData[restData$zipCode %in% c("21212","21213"),]
+
+restData$zipWrong = ifelse(restData$zipCode <0, TRUE, FALSE) #우편번호가 0보다 작으면 TRUE
+table(restData$zipWrong, restData$zipCode <0)
+
+
+#4분위수를 해당하는 값에 갯수 파악 Summary
+restData$zipGroups = cut(restData$zipCode, breaks=quantile(restData$zipCode)) #양적함수? cut?
+table(restData$zipGroups)
+#결과:(-2.123e+04,2.12e+04]  (2.12e+04,2.122e+04] (2.122e+04,2.123e+04] (2.123e+04,2.129e+04] 
+#       0~25%                   25~50%                50~75%                   75~100%
+table(restData$zipGroups, restData$zipCode)
+
+
+##Cress tabs(변수를 행,열로 크로스 하여 보여준다)
+data(UCBAdmissions)
+DF = as.data.frame(UCBAdmissions)
+summary(DF)
+xt <- xtabs(Freq ~ Gender + Admit, data=DF)
+xt
+
+##Flat tables(데이터를 평면으로 보여준다_)
+warpbreaks$replicate <- rep(1:9, len = 54)
+xt = xtabs(breaks ~ . , data=warpbreaks )
+xt
+ftable(xt) # 데이터를 보기 힘들기 때문에, 평면으로 보여준다.
+
+```
+
+
+##3. 결측 값 및 데이터 점검 및 기타
+```{r}
+#결측 값
+sum(is.na(restData$councilDistrict)) # 0,1 반환
+any(is.na(restData$councilDistrict)) # TRUE, FALSE 반환(1개라도)
+all(restData$zipCode > 0) # 모든것 TRUE,FALSE
+
+#결측 값 Column summary
+colSums(is.na(restData))
+all(colSums(is.na(restData))==0)
+
+#논리 비교
+X[(X$var1 <=3 & X$var3 > 11),]
+X[(X$var1 <=3 | X$var3 > 15),]
+
+# 변수 추가
+X$var4 <- rnorm(5) 
+Y <- cbind(X, rnorm(5)) 
+
+##Size of a data set(데이터셋 데이터 크기 확인)
+fakeData = rnorm(1e5)
+object.size(fakeData)
+print(object.size(fakeData), units="Mb")
+
+
+```
+
+##4. 데이터 재 형성
+####참고 : http://www.slideshare.net/jeffreybreen/reshaping-data-in-r
+```{r}
+#install.packages("reshape")
+library(reshape)
+
+#month,day 변수 기준으로  모든 변수의 variable이 값으로 변수의 값은 Value로 변경.(결측값 제거 : na.rm=TRUE)
+aqm <- melt(airquality, id=c("Month", "Day"), na.rm=TRUE)
+
+# y축 day, x축 month, dimension과 measure에 해당되는 변수(variable)값을 표시한다.
+a <- cast(aqm, Day ~ Month ~ variable)
+
+# y축 month, x축 variable, 에 대한 월별 각 variable에 평균값 산출
+b <- cast(aqm, Month ~ variable, mean) 
+
+# y축 month, x축 variable, 에 대한 월별 각 variable을 (항목[Member])분리해 평균값 표시
+c <- cast(aqm, Month ~ . |variable, mean) 
+
+# margins 행("grand_row"), 열("grand_col")에 대한 소계 산출
+d <- cast(aqm, Month ~ variable, mean, margins=c("grand_row","grand_col"))
+
+# 특정변수만 처리하고자 하는 경우 서브세트 기능을 이용해 ozones에 대한 변수만 처리
+e <- cast(aqm, Day ~ Month, mean, subset=variable=="Ozone")
+
+# min, max를 동시에 표시해주는 range : min은 _X1, max는 _X2라는 suffix를 붙여준다.
+f <- cast(aqm, Month ~ variable, range) 
+
+```
+####plyr
+plyr apply(ddply)함수에 기반해 데이터와 출력변수를 동시에 배열로 치환하여 처리하는 패키지 이다.
+예를들어 ddply함수는 데이터프레임 데이터를 가공해 데이터프레임으로 돌려준다
+
+난수데이터 생성
+year변수에 2000,2001,2002년 데이터를 만들고, count 변수에  난수를 생성하는 함수round
+를 이용하여 0에서 20사이의 숫자 중 9개를 저장한다. 
+runif(생성할 난수의 갯수, 최솟값, 최대값) runif(9,0,20)
+
+- set.seed 함수는 R에서 난수를 생성할 때 일정하게 고정시켜주는 역할을 한다.
+- 즉 난수가, 1,6,9 가 발생했다면, 반복적으로 1,6,9가 생성되가 만들어 주는 역할을 한다.
+- ()숫자를 변경하면 다른 케이스의 결과가 나오지만, 케이스마다 난수의 값은 같다.
+```{r}
+#install.packages("plyr")
+library(plyr)
+set.seed(1)
+d <- data.frame(year=rep(2000:2002, each=6), count=round(runif(9, 0, 20)))
+print(d)
+
+#year를 함수로 입력받고 year의 mean과 sd를 구해 각각 저장한 다음 cv를 구한다.
+#결과를 year별로 리터하면데 데이터플레임을 생성하다. for loop도 없고 간단한 예제다.
+ddply(d, "year", function(x) {
+  mean.count <-mean(x$count)
+  sd.count <- sd(x$count)
+  cv <- sd.count/mean.count
+  data.frame(mean.count, sd.count, cv.count = cv)
+})
+
+# transform  d 데이터 프레임의 전체 row 표현 
+# summarize 변수 year의 값들이 groupping되어 distinct한 row 표현
+ddply(d, "year", summarise, mean.count = mean(count))
+ddply(d, "year", transform, total.count = sum(count))
+```
+
+####sqldf를 이용한 데이터 분석
+- R에서는 sqldf package를 통하여 표준 sql에서 사용되는 문장을 사용할 수 있다.
+```{r}
+#install.packages("sqldf")
+library(sqldf)
+
+#sqldf 함수의 "" 안에 sql로 표현
+sqldf("select * from iris limit 10")  # iris 10행(Row)수 데이터 조회 = head(iris, 10)
+#like문을 조건 ''안에 표현하여 사용된다 
+sqldf("select count(*) from iris where Species like 'Se%'")
+
+```
+
+
+
+##5. 데이터 병합(Merging Data)
+####참고 병합 :http://www.statmethods.net/management/merging.html
+####참고 Join :http://en.wikipedia.org/wiki/Join_(SQL)
+```{r}
+fileUrl1 <-"https://dl.dropboxusercontent.com/u/7710864/data/reviews-apr29.csv"
+fileUrl2 <-"https://dl.dropboxusercontent.com/u/7710864/data/solutions-apr29.csv"
+download.file(fileUrl1, destfile = "data/reviews.csv")
+download.file(fileUrl2, destfile = "data/solutions.csv")
+reviews = read.csv("data/reviews.csv");
+solutions <- read.csv("data/solutions.csv");
+head(reviews)
+head(solutions)
+names(reviews)
+names(solutions)
+mergedData = merge(reviews, solutions, by.x="solution_id", by.y="id", all=TRUE)# x,y데이터를 병합, by.x, by.y기반으로 병합 모든 컬럼.
+head(mergedData)
+intersect(names(solutions), names(reviews)) # 교집합
+margedData2 = merge(reviews, solutions, all=TRUE) # Row 병합
+head(margedData2)
+df1 = data.frame(id=sample(1:10), x=rnorm(10))
+df2 = data.frame(id=sample(1:10), y=rnorm(10))
+arrange(join(df1,df2), id) #plyr package
+df1 = data.frame(id=sample(1:10), x=rnorm(10))
+df2 = data.frame(id=sample(1:10), y=rnorm(10))
+df3 = data.frame(id=sample(1:10), z=rnorm(10))
+dfList = list(df1,df2,df3)
+join_all(dfList)#plyr package
+```
+
+
+#3. 날짜 함수
+####참고(lubridate:library):http://www.r-statistics.com/2012/03/do-more-with-dates-and-times-in-r-with-lubridate-1-1-0/
+```{r}
+d1 = date()
+class(d1)
+d2 = Sys.Date()
+class(d2)
+# %d = (0-31), %a = 월-일, %A = 월요일-일요일, %m = (00-12), %B = 1월~12월, %y =(14), %Y = (2014)
+format(d2, "%a %b %d %B")
+x = c("1jan1960", "2jan1960", "31mar1960", "30jul1960");
+z = as.Date(x, "%d%b%Y")
+z[1]-z[2]
+as.numeric(z[1]-z[2])
+d2 <- c(seq(as.Date(d2[1]+1),as.Date(d2[1]+10),by=2))
+weekdays(d2) #요일
+months(d2)  #월
+julian(d2) #줄리안 데이터 1970-01-01이 시작 1이다.
+
+```
+
+#4. 데이터 시각화
+##1. Base Plot
+#### Parameter : pch(plot symbol), lty(라인타입,솔리드,다쉬,도트), lwd(라인위스)
+#### col(칼라), xlab(x레이블), ylab(y레이블), par(las, bg, mar, oma, mfrow, mfcol) global 변수
+```{r}
+hist(airquality$Ozone)
+with(airquality, plot(Wind, Ozone))
+title(main = "Ozone and Wind in New York City") ## with(airquality, plot(Wind, Ozone, main = "Ozone and Wind in New York City"))
+with(subset(airquality, Month ==5),  points(Wind, Ozone, col = "blue"))
+with(subset(airquality, Month !=5),  points(Wind, Ozone, col = "red"))
+legend("topright", pch =1, col = c("blue", "red"), legend = c("May", "Order Months" ))
+airquality <- transform(airquality, Month = factor(Month))
+boxplot(Ozone ~ Month, airquality, xlab = "Month", ylab = "Ozone (ppd)")
+par("lty","col","pch","bg","mar","mfrow")  
+
+```
+
+####회귀 라인, 선형모델
+```{r}
+with(airquality, plot(Wind, Ozone, main = "Ozone and Wind in New York City"), pch = 20)
+model <- lm(Ozone ~ Wind, airquality)
+abline(model, lwd =2)
+#Multiple Base Plots
+par(mfrow = c(1,2))
+with(airquality, { 
+    plot(Wind, Ozone, main = "Ozone and Wind")
+    plot(Solar.R, Ozone, main = "Ozone and Solar") })
+
+par(mfrow = c(1,3), mar = c(4, 4, 2, 1), oma = c(0,0,2,0))
+with(airquality, { 
+    plot(Wind, Ozone, main = "Ozone and Wind")
+    plot(Solar.R, Ozone, main = "Ozone and Solar")
+    plot(Temp, Ozone, main = "Ozone and Temp") 
+    mtext("Ozone and Solar and Temp",  outer =TRUE) })
+
+
+```
+
+
+
+#### 여백설정 및 차트 배열
+```{r}
+example(points)
+x <- rnorm(100)
+hist(x)
+y <- rnorm(100)
+plot(x, y)
+z <- rnorm(100)
+plot(x,z)
+par(mar = c(2,2,2,2))
+plot(x,y)
+par(mar = c(4,4,2,2))
+plot(x,y, pch = 10)
+plot(x,y, pch = 4)
+plot(x,y, pch = 20)
+title("lable")
+text(-2, -2, "Lable")
+legend("topleft", legend = "Data")
+fit <- lm(y ~ x)
+abline(fit)
+abline(fit, lwd = 3, col="blue")
+plot(x, y, xlab ="weight", ylab =" height", main = "test", pch = 20)
+
+z <- rpois(100, 2)
+par(mfrow = c(2,1))
+plot(x,y, pch =20)
+plot(x,y, pch =19)
+par("mar") # 파라미터 확인
+par(mar = c(2,2,1,1))
+plot(x,y, pch =20)
+plot(x,y, pch =19)
+par(mfrow = c(1,2))
+plot(x,y, pch =20)
+plot(x,y, pch =19)
+
+par(mfrow = c(1,1))
+y <- x + rnorm(100)
+g <- gl(2, 50)
+g <- gl(2, 50, labels = c("Male","Female"))
+str(g)
+plot(x,y)
+plot(x,y, type = "n")
+points(x[g =="Male"], y[g =="Male"], col="green")
+points(x[g =="Female"], y[g =="Female"], col="blue", pch = 20)
+setwd("E:/")
+dev.copy(png, file = "test.png") # 차트 이미지 복사.
+dev.off()
+
+```
+
+
+##2. Lattice Plotting System(격자 Plot)
+####lattice : xyplot, bwplot, histogram, stripplot, dotplot, splom, levelplot, contourplot
+#### grid   xyplot(y ~ x | y * g, data)
+```{r}
+#install.packages("lattice")
+#library(lattice)
+#xyplot(Ozone ~ Wind, data = airquality)
+#with(airquality, plot(Wind, Ozone))
+#airquality <- transform(airquality, Month =factor(Month))
+#xyplot(Ozone ~ Wind | Month , data = airquality, layout = c(5,1))
+#p <- xyplot(Ozone ~ Wind, data = airquality) 
+#print(p) #plot appears
+#xyplot(Ozone ~ Wind, data = airquality) #auto-printing
+
+
+```
+
+##3. ggplot2 Plot
+```{r}
+#install.packages("ggplot2")
+#library(ggplot2)
+#data(mpg)
+#str(mpg)
+#qplot(displ, hwy, data = mpg)
+```
+
+
+
+
