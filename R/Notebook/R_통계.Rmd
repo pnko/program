@@ -1,0 +1,2133 @@
+---
+title: "R 통계"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+#통계분석
+##1.상관분석
+####(쌍으로 관찰된 두 변수 X,Y간의 관련성을 분석하는 것)
+##### 분석절차
+  - 1. 눈으로 변수관계를 확인하는 산점도의 작성
+  - 2. 하나의 수치로 변수간의 직선관계를 나타내는 상관계수를 구한다.:cor(x,y)
+  - 3. 회귀식의 적합을 통하여 두 변수간의 관계를 함수로 찾는 것.(회귀분석을 실시하기 전에 실시하는 중요한 과정)
+  - 4. 회귀식의 유용성을 평가한다.
+```{r}
+#install.packages("Hmisc")
+library(Hmisc)
+data(mtcars)
+mtcars
+
+data <- mtcars
+x <- data$drat
+y <- data$disp
+plot(x, y)                              #--- 산점도
+plot(x, y, main="mtcars", xlab="drat", ylab="disp")         #--- 산점도
+
+cor(x, y)                               #--- 피어슨 상관계수 (0.6 이상이면 양의 상관)
+cov(x, y)
+#--- -0.6 보다 작으므로 음의 상관 관계가 있음
+cor(data)                               #--- 피어슨 상관계수 (0.6 이상이면 양의 상관)
+cov(data)                               #--- 공분산, 0이면 독립
+
+rcorr(x, y, type="spearman")
+rcorr(as.matrix(data), type="spearman")  #--- 스피어만 상관계수, type = spearman | pearson
+rcorr(as.matrix(data), type="spearman")$r
+
+
+#--- 학생별 과목별 등수
+korean <- c(85,75,65,78,59,60,90,100,99,91,70)
+math   <- c(80,60,75,40,50,64,70,78,90,98,50)
+english<- c(80,70,69,79,80,95,98,97,67,80,59)
+science<- c(90,100,50,80,67,89,60,79,89,80,100)
+test<-data.frame(korean,math,english,science)
+
+test
+
+
+rcorr(as.matrix(test), type="pearson")  #--- pearson 상관계수
+rcorr(as.matrix(test), type="pearson")$r
+
+rcorr(as.matrix(test), type="spearman")  #--- 스피어만 상관계수
+rcorr(as.matrix(test), type="spearman")$r
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+
+```
+
+##2.상관분석
+### 상관분석 실습
+  - 상관분석 : 두 변수간 선형적 관계의 강도 (인과관계 X)
+```{r}
+### 1. 데이터 파일 불러오기 ###
+#moving_pop = read.csv ("data/moving_pop2.csv", header=TRUE)
+
+### 2. 데이터 탐색 ###
+#moving_pop2=moving_pop[1:5000,]
+#head (moving_pop2)
+
+  # 지역 / 주구분 / 시간대 / 날씨 / 성별 / 연령별 / 유동인구수
+  # 원본 데이터 23,000개 행임.
+
+### 3. 상관분석 ###
+#  cor(남자합계,여자합계) 
+    #단순한 상관계수 표시
+    #0.8400031
+
+#  cor.test(남자합계,여자합계)
+    #상관계수가 0이라는 귀무가설을 기각
+
+#  plot(남자합계,여자합계)
+
+#  class (남자합계)
+#  class (여자10대)
+
+#  여자10대=as.numeric(여자10대)
+#  남자50대=as.numeric(남자50대)
+
+#  cor(여자10대,남자50대)
+#  cor.test(여자10대,남자50대)
+#  plot(여자10대,남자50대)
+
+#  여자50대=as.numeric(여자50대)
+#  남자10대=as.numeric(남자10대)
+#  cor(여자50대,남자10대)
+#  cor.test(여자50대,남자10대)
+#  plot(여자50대,남자10대)
+#  plot(남자10대,여자10대)
+
+#  cor(X50대합계,X50대합계) #동일변수간 상관계수는 1
+#  cor.test(X10대합계,X20대합계)
+
+
+#  주중합계=subset(moving_pop2, select=전체합계, subset=(주구분=="주중"))
+#  주말합계=subset(moving_pop2, select=전체합계, subset=(주구분=="주말"))
+
+#  class (주중합계)
+
+#  주중합계=as.vector(as.matrix(주중합계))
+#  주말합계=as.vector(as.matrix(주말합계))
+
+#  length(주중합계)
+#  length(주말합계)
+#  cor (주중합계,주말합계)
+
+
+```
+
+### 3. 분석가설 설정 
+  - 참고 > 통계분석방법 설명   - http://blog.naver.com/PostView.nhn?blogId=gracestock_1&logNo=120200450793&categoryNo=12&parentCategoryNo=0&viewDate=&currentPage=1&postListTopCurrentPage=1
+  - 1) 지역별 유동인구수는 차이 
+  - 2) 주중/주말 구분에 따른 유동인구수 차이 
+  - 3) 시간대별 유동인구수 차이 
+  - 4) 날씨별 유동인구수 차이 
+  - 5) 성별 유동인구수 차이 
+  - 6) 연령대별 유동인구수 차이 
+
+
+##3.분산분석
+### 4. 분산분석 (ANOVA) ###
+
+  #분산분석 : 3개 이상의 요인의 차이를 검정 (표본이 정규분포를 따를때 수행가능)
+
+    # 1) 데이터 정규성 검정 - 정규분포에 가까운 경우 (p값 < 0.05) 분산분석 활용 가능
+    #                       - 정규뷴포를 따르지 않는다면 kruskal-wallis검정 수행
+
+    out=lm(전체합계~조사번호)
+    shapiro.test(resid(out))
+      
+    # 2) 지역별 유동인구수는 차이는? 분산분석 진행 
+    out_place= aov(전체합계~조사번호)
+    summary (out_place) #p값 < 0.001 따라서 지역 변수 유의미
+
+    # 3) 주중/주말 구분에 따른 유동인구 차이는
+    out_week=aov(전체합계~주구분)
+    summary (out_week) #p값 0.153 (>0.05) 따라서 주중/주말변수 무의미
+
+    # 3) 날씨별 구분에 따른 유동인구 차이는
+    out_weather=aov(전체합계~날씨)
+    summary (out_weather) #p값 0.937 (>0.05) 따라서 날씨 무의미
+
+    # 4) 시간별 구분에 따른 유동인구 차이는
+    out_time=aov(전체합계~시간대)
+    summary (out_time) #p값 < 0.001 (>0.05) 따라서 시간대 변수 유의미
+
+
+##4.회귀분석
+###-----------------------------------------------------------------------------
+### 회귀분석(주어진 자료를 통하여 변수간의 함수관계를 밝히고 이 함수관계를 이용하여 독립변수값에 대응되는 종속변수의 값을 '예측' 또는 '설명'하는 분석 방법이다. 잔차 분석이라고도 한다: 종속변수와 독립변수와의 관계를 밝히는 통계모형에서 모형에 의하여 추정된 종속변수의 값과 실제 관찰된 종속변수 값과의 차이 이다. 이 차이는 오차(error)로도 해석된다(통계모형이 설명하지 못하는 불확실성 정보이다))
+###-----------------------------------------------------------------------------
+```{r}
+set.seed(2)                             #--- 난수의 seed 값 지정
+x <- runif(10, 0, 11)                   #--- 0 ~ 11, 10개의 난수 생성 (Uniform)
+y <- runif(10, 11, 20)                  #--- 11 ~ 20, 10개의 난수 생성 (Uniform)
+data <- data.frame(x, y)
+data
+
+lm (y ~ x, data=data)                   #--- 단순 회귀분석
+#--- 회귀식 : y = 15.82328 - 0.09608 * x
+
+set.seed(2)                             #--- 난수의 seed 값 지정
+y <- runif(10, -10, 20)                 #--- 난수 생성
+u <- runif(10, 0, 11)                   #--- 난수 생성
+v <- runif(10, 11, 20)                  #--- 난수 생성
+w <- runif(10, 1, 30)                   #--- 난수 생성
+(data <- data.frame(y, u, v, w))
+
+(m <- lm (formula = y ~ u + v + w))     #--- 다중 회귀분석
+#--- 회귀식 : y = 3.8503 - 0.2090 * u + 0.4120 * v - 0.1609 * w
+
+summary(m)
+#--- F통계량 : 0.1029
+#--- p-value : 0.9554 (유의수준 5% 하에서 0.05보다 크므로 통계적으로 유의하지 않음)
+#--- 결정 계수 = 0.04894, 수정 결정 계수 = -0.4266 : 매우 낮은 값으로 회귀식이 데이터를 설명하지 못함
+
+data(ChickWeight, package="datasets")   #--- 식이요법을 적용한 닭
+head(ChickWeight)
+
+data <- ChickWeight[ChickWeight$Chick == 1, ]   #--- 1번 닭의 데이터만 추출
+(m <- lm(weight~Time, data=data))
+summary(m)
+#--- F 통계량 : 232.7
+#--- p-value : 0.05보다 작으므로 유의수준 5% 하에서 통계적으로 유의함
+#--- 결정 계수 = 0.9588 : 회귀식이 데이터를 96% 정도 설명하고 있음
+#--- Pr(>|t|) : 회귀계수들의 p-value, 0.05보다 작으므로 통계적으로 유의함
+
+
+data(cars, package="datasets")
+cars
+
+speed2 <- cars$speed^2
+data <- cbind(speed2, cars)
+data
+(m <- lm(dist ~ speed + speed2, data=data))
+summary(m)
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+x <- c(1:9)
+y <- c(5, 3, 2, 3, 4, 6, 10, 12, 18)
+data <- data.frame(x, y)
+plot(data)
+
+x2 <- x^2
+data <- cbind(x2, data)
+plot(data)
+
+(m <- lm(y ~ x, data=data))
+summary(m)
+
+(m <- lm(y ~ x + x2, data=data))
+summary(m)
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+```
+
+#### 변수 선택
+```{r}
+#--- 후진제거법으로 변수 선택
+x1 <- c(7, 1, 11, 11, 7, 11, 3, 1, 2,21, 1,11, 10)
+x2 <- c(26, 29, 56, 31, 52, 55, 71,31, 54, 47, 40, 66, 68)
+x3 <- c(6, 15, 8, 8, 6, 9, 17, 22, 18, 4, 23, 9, 8)
+x4 <- c(60, 52, 20, 47, 33, 22, 6, 44, 22, 26, 34, 12, 12)
+y <- c(78.5, 74.3, 104.3, 87.6, 95.9, 109.2, 102.7, 72.5, 93.1, 115.9, 83.8, 113.3, 109.4)
+(data <- data.frame(x1, x2, x3, x4, y))
+plot(data)
+
+m <- lm(y ~ x1 + x2 + x3 + x4, data=data)
+summary(m)
+#--- x3의 유의수준이 가장 높아, x3 제거
+
+m <- lm(y ~ x1 + x2 + x4, data=data)
+summary(m)
+#--- x4의 유의수준이 가장 높아, x4 제거
+
+m <- lm(y ~ x1 + x2, data=data)
+summary(m)
+
+#--- 자동으로 변수 선택
+#--- direction : forward, backward, both
+#--- 전진선택법으로 변수 선택
+step(lm(y ~ 1, data=data), scope=list(lower = ~ 1, upper = ~ x1 + x2 + x3 + x4), direction = "forward")
+
+#--- 후진소거법으로 변수 선택
+step(lm(y ~ x1 + x2 + x3 + x4, data=data), scope=list(lower = ~ 1, upper = ~ x1 + x2 + x3 + x4), direction = "backward")
+
+#--- 단계적방법으로 변수 선택
+step(lm(y ~ 1, data=data), scope=list(lower = ~ 1, upper = ~ x1 + x2 + x3 + x4), direction = "both")
+
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+```
+
+
+```{r}
+# 예제] MASS hills 데이터 
+data(hills, package="MASS")
+head(hills)
+
+#--- 전진선택법으로 변수 선택
+step(lm(time ~ 1, data=hills), scope=list(lower = ~ 1, upper = ~ dist + climb + time), direction = "forward")
+
+# 예제2 416Page 참조 
+```
+
+##5.시계열분석
+###-----------------------------------------------------------------------------
+### 시계열분석(시간의 흐름에 따라 관찰되는 값들을 시계열 자료라 한다)
+###-----------------------------------------------------------------------------
+정상성 : 비정상성인 시계열 자료를 정상성으로 변환하는 작업(통계분석은 추정과 가정검증과 예측이기 때문에) (1). 평균이 일정하다. 즉 모든 시점에 대한 일정한 평균을 가진다., (2)분산도 시점에 의존하지 않는다. (3)공분산은 단지 시차에만 의존하고 실제 어느 지점 t, s에는 의존하지 않는다(?)
+비정상성 : 시계열로 분석하기 어려운 자료.
+1. 데이터가 정상성 자료인지, 비정상성 자료인지 판단한다.(어떻게 판단?:정상성 판단)
+2. 비정상성 시계열 자료를 정상성 시계열 자료로 변환한다.
+  - 방법 : 변환(분산이 일정하지 않을 때), 차분(평균이 일정치 않는 시계열)
+
+자기회귀모형(AR모형)
+AR(p) : AR(1) 과거 1시점 전까지 영향,  AR(2) 과거 2시점 전까지 영향
+ - 판단방법 : 자기상관함수(ACF), 부분자기함수(PACF)
+
+이동평균모형(MR모형)
+1차이동평균모형(MA(1)) 시계열이 같은 시점의 백색잡음과 바로 전 시점의 백색잡음의 결합으로 이뤄진 모형
+2차이동평균모형(MA(2)) 시계열이 같은 시점의 백색잡음과        전 시점의 백색잡음. 그리고 시차가 2인 백색잡음의 결합.(시차가2인?)
+
+자기회귀누적이동평균모형(ARIMA(p,d,q)모형)
+비정상시계열 모형이다. 즉 ARIMA모형은 차분이나 변환을 통해 AR,MA 이 둘을 합친 ARMA모형으로 정상화 할 수 있다.  -> AR,MA는 차분과 변환을 통해, 비정상성 시계열을 정상성으로 변환해 줘야 하는데 ARIMA 모형은 차분도 같이 진행한다. 
+
+분해시계열 : 시계열을 분리해 분석하는 방법(영향을 주는 요인), 회귀분석적인 방법을 주로 사용한다.
+ - 종류 : 추세요인, 계절요인, 순환요인, 불규칙요인
+```{r}
+#install.packages("TTR")
+library(TTR)
+
+#install.packages("forecast")
+library(forecast)
+
+
+###-----------------------------------------------------------------------------
+#--- "영국 왕들의 사망시 나이" 분석
+data <- c(60, 43, 67, 50, 56, 42, 50, 65, 68, 43, 
+          65, 34, 47, 34, 49, 41, 13, 35, 53, 56,
+          16, 43, 69, 59, 48, 59, 86, 55, 68, 51,
+          33, 49, 67, 77, 81, 67, 71, 81, 68, 70,
+          77, 56)
+#data <- read.table("http://robjhyndman.com/tsdldata/misc/kings.dat", header=TRUE, sep=",", 
+#                   stringsAsFactors=FALSE, na.strings=c('NIL'), 
+#                   comment.char="#", encoding="UTF-8") 
+#data <- scan("http://robjhyndman.com/tsdldata/misc/kings.dat")
+#write.table(data, file="data/data.csv", append=FALSE, quote=FALSE, sep=",", row.names=FALSE)
+(data <- ts(data))                      #--- 데이터를 시계열 자료 형식으로 변환
+
+plot(data)                              #--- plot.ts 함수로 시각화
+#plot.ts(data)                          #--- plot.ts 함수로 시각화
+#--- 비계절성 시계열 자료 : 추세요인과 불규칙 요인으로 구성
+#--- 계절요인과 순환요인이 없는 시계열 자료
+
+#현재 데이터의 특정은 비계절성을 띄는 시계열(트랜드(추세)요소, 불규칙 요소 구성)
+#SMA는 이동 평균을 구하는 함수로써, 시계열의 트랜드를 보여준다. 
+library(TTR)
+(data03 <- SMA(data, n = 3))            #--- 3년마다 평균을 낸 데이터로 변환
+(data08 <- SMA(data, n = 8))            #--- 8년마다 평균을 낸 데이터로 변환
+plot(data)
+plot(data03)
+plot(data08)
+# http://finance.naver.com/item/fchart.nhn?code=035420
+
+
+#--- 차분 (difference) 데이터의 평균이 일정하지 않아 차분함.
+data01 <- diff(data, differences = 1)
+plot(data01)                            #--- ARIMA(p, 1, q) 모델
+
+(acf(data01, lag.max=20))               #--- 자기상관함수(ACF)
+acf(data01, lag.max=20, plot=FALSE)
+#--- lag = 0인 지점은 판단에서 제외
+#--- lag = 1인 지점을 빼고는 모두 점선 구간 안에 있음
+#--- lag = 2에서 절단점을 가짐 -> MA(1) 모형
+
+(pacf(data01, lag.max=20))              #--- 부분자기함수(PACF)
+#--- lag = 0인 지점은 판단에서 제외
+#--- lag = 1, 2, 3에서 점선 구간을 초과하고 음의 값을 가지며
+#--- lag = 4에 절단점을 가짐 -> AR(3) 모형
+#arma(3,1)
+
+library(forecast)
+auto.arima(data)                        #--- 자동으로 최적의 ARIMA 모형을 제시
+#--- ARIMA(0, 1, 1) 모형 채택
+
+#--- 모수가 적어 가장 간단하고 표현하기 쉬운 MA(1) 모형 선택
+
+#--- 모델 보정 (fitting)
+(data02 <- arima(data, order=c(0, 1, 1)))
+
+library(forecast)
+(data03 <- forecast.Arima(data02, h=20))#--- 43번째부터 와의 사망 시 나이 예측
+plot(data03)                            #--- 신뢰구간 80%와 95%에서 예측값
+#plot.forecast(data03)                  #--- 신뢰구간 80%와 95%에서 예측값
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+```
+```{r}
+###-----------------------------------------------------------------------------
+#--- "뉴욕에서 1946년 1월부터 1959년 12월까지 월별 출생자 수" 분석
+data <- scan("http://robjhyndman.com/tsdldata/data/nybirths.dat")
+(data <- ts(data, frequency=12, start=c(1946, 1)))          #--- 데이터를 시계열 자료 형식으로 변환
+
+plot(data)                              #--- plot.ts 함수로 시각화
+#plot.ts(data)                          #--- plot.ts 함수로 시각화
+#--- 계절성 시계열 자료 : 추세요인, 계절요인, 불규칙요인으로 구성
+#--- 1~3월 초에는 급격히 출생수가 올라가는 반면,
+#--- 그 이후로는 떨어지다가 다시 9~12월로 갈수록 급격히 증가
+
+data01 <- decompose(data)               #--- 시계열에 영향을 주는 일반적인 요인을 시계열에서 분리              
+data01$x                                #--- 원본 데이터
+data01$trend                            #--- 추세요인 (Trend factor, 경향요인)
+data01$seasonal                         #--- 계절요인 (Seasonal factor)
+data01$random                           #--- 불규칙요인 (Irregular factor)
+plot(data01)                            #--- 추세요인, 계절요인, 불규칙요인이 포함된 그래프
+
+data02 <- data - data01$seasonal  
+plot(data02)                            #--- 계절요인을 제거한 그래프
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+```
+```{r}
+###-----------------------------------------------------------------------------
+#--- "1987년 1월부터 1993년 12월까지 비치리조트 기념품 매장의 매출액" 분석
+data <- scan("http://robjhyndman.com/tsdldata/data/fancy.dat")
+(data <- ts(data, frequency=12, start=c(1987, 1)))          #--- 데이터를 시계열 자료 형식으로 변환
+
+plot(data)                              #--- plot.ts 함수로 시각화
+#plot.ts(data)                          #--- plot.ts 함수로 시각화
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+###-----------------------------------------------------------------------------
+#--- 1866년에서 1911년까지 매년 여성의 스커트 지름 길이
+data <- scan("http://robjhyndman.com/tsdldata/roberts/skirts.dat", skip=5)
+(data <- ts(data, start=c(1866)))       #--- 데이터를 시계열 자료 형식으로 변환
+
+plot(data)                              #--- plot.ts 함수로 시각화
+#plot.ts(data)                          #--- plot.ts 함수로 시각화
+#--- 비정상 시계열 : 시간에 따라 평균이 일정하지 않음
+
+#--- 차분 (difference)
+data01 <- diff(data, differences=1)
+plot(data01)
+
+data02 <- diff(data, differences=2)
+plot(data02)
+#--- 정상 시계열 : 평균과 분산이 시간에 의존해 변하지 않음, ARIMA(p, 2, q) 모델
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+```
+```{r}
+###-----------------------------------------------------------------------------
+#--- 1500년부터 1969년 사이의 화산폭발 먼지량 데이터
+#---     VOLCANIC DUST VEIL INDEX, NORTHERN HEMISPHERE, 1500-1969
+data <- scan("http://robjhyndman.com/tsdldata/annual/dvi.dat", skip=1)
+(data <- ts(data, start=c(1500)))       #--- 데이터를 시계열 자료 형식으로 변환
+
+plot(data)                              #--- plot.ts 함수로 시각화
+#plot.ts(data)                          #--- plot.ts 함수로 시각화
+
+(acf(data, lag.max=10))                 #--- 자기상관함수(ACF)
+#acf(data, lag.max=20, plot=FALSE)
+#--- lag = 0인 지점은 판단에서 제외
+#--- lag = 4에서 절단점을 가짐 -> MA(3) 모형
+
+(pacf(data, lag.max=10))                #--- 부분자기함수(PACF)
+#--- lag = 0인 지점은 판단에서 제외
+#--- lag = 3에 절단점을 가짐 -> AR(2) 모형
+
+library(forecast)
+auto.arima(data)
+#--- ARIMA(1, 0, 2) 모형
+
+#--- 모수를 적게 사용한 AR(2) 모형을 채택
+
+#--- 모델 보정 (fitting)
+(data02 <- arima(data, order=c(2, 0, 0)))
+
+library(forecast)
+(data03 <- forecast.Arima(data02, h=31))#--- 43번째부터 와의 사망 시 나이 예측
+plot(data03)                            #--- 신뢰구간 80%와 95%에서 예측값
+#plot.forecast(data03)                  #--- 신뢰구간 80%와 95%에서 예측값
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+```
+
+
+##6.다차원척도법
+###-----------------------------------------------------------------------------
+### 다차원척도법(Multidmensional Scaling, MDS): 여러 대상 간의 관계에 관한 수치적 자료를 이용하여 유사성에 대한 측정치를 상대적 거리로 시각화하는 방법이다.
+###-----------------------------------------------------------------------------
+```{r}
+data(eurodist, package="datasets")      #--- 유럽 도시 사이의 거리를 매핑한 자료
+eurodist
+loc <- cmdscale(eurodist)                #--- 다차원 척도 계산
+
+x = loc[,1]
+y = loc[,2]
+
+plot(x, y, type="n", main="eurodist", xlab="x", ylab="y")
+#--- type : p. 점, l. 라인, o. 점과 선, n. 빈 화면 표시
+text(x, y, rownames(loc), cex=0.8)
+abline(v=0, h=0)                        #--- 중심선 표시
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+```
+
+
+##7.주성분분석
+###-----------------------------------------------------------------------------
+### 주성분분석(Principal Component Analysis,PCA):상관관계가 있는 변수들을 결합해 상관관계가 없는 변수로 분산을 극대화하는 변수로, 선형결합을 해 변수를 축약하는데 사용된다(?), 예측모델을 만들 때 주로 사용. 서로 연관된 변수가 관측될때, 이 변수들의 정보를 최대한 확보하는 적은 수의 새로운 변수를 생성하는 방법,  변수들중 정보의양(변이)를 측정하여, 가장 많이 확보하는 순서대로 변수들의 선형결합을 이용하여 새로운 변수를 구하는 과정이다.
+###-----------------------------------------------------------------------------
+```{r}
+data(USArrests, package="datasets") 
+(data <- USArrests)
+summary(USArrests)
+plot(USArrests)
+
+
+
+(data01 <- princomp(data, cor=TRUE))    #--- 상관행렬을 사용하여 주성분 분석
+
+scale(data)
+data01 <- prcomp(data, scale=TRUE)
+
+data01
+summary(data01)
+
+predict(data01)
+
+#--- Comp.1을 포함할 경우 62% (0.6200604)를 설명하고
+#--- Comp.2을 포함할 경우 86% (0.8675017)를 설명하고
+#--- Comp.3을 포함할 경우 95% (0.9566425)를 설명한다.
+loadings(data01)
+plot(data01, type="lines")
+data01$scores
+biplot(data01)
+boxplot(Murder~Assault, scale(data))
+
+
+boxplot(count ~ spray, data = InsectSprays, col = "lightgray")
+# *add* notches (somewhat funny here):
+boxplot(count ~ spray, data = InsectSprays,notch = TRUE, add = TRUE, col = "blue")
+
+par(mfrow=c(2,1))
+boxplot(decrease ~ treatment, data = OrchardSprays,log = "y", col = "bisque")
+boxplot(decrease ~ treatment, data = OrchardSprays, col = "bisque")
+
+```
+
+
+##8.예제
+###-----------------------------------------------------------------------------
+### Exercise
+###-----------------------------------------------------------------------------
+```{r}
+#확률 실험.
+#이산확율분포:확률변수를 통해 출현 가능한 값이 셀 수 있는 값을 취한다.
+x <- c(0,1,2,3)
+pr.x <- c(0.010, 0.840 ,0.145,0.005)
+ev.x <- sum(x * pr.x)
+ev.x
+(x^2) * pr.x # x의 기대값  
+ev2.x <- sum((x^2) * pr.x) #x 제곱의 기대값
+ev2.x - (ev.x^2) #분산
+sqrt(ev2.x - (ev.x^2)) # 표준편차
+
+```
+#### 변수의 중요도
+```{r}
+#패키지 설치
+#install.packages("MASS")
+library(MASS)
+
+data(iris)
+ldaobj <- lda(Species ~ ., data=iris)
+ldapred <- predict(ldaobj)$posterior
+
+#install.packages("klaR")
+library(klaR)
+
+data(B3)
+gw_obj <- greedy.wilks(PHASEN ~ . , data=B3, niveau=0.1)
+gw_obj
+
+data(iris)
+iris2 <- iris[, c(1,3,5)] # data iris 1,3,5 cloumn 
+# Species 별 petal.width가 어떻게 분류되어 있는지 결과 확인
+plineplot(Species ~ ., data = iris2, 
+          method = "lda", x = iris[, 4], xlab = "Petal.Width")
+
+
+data(iris)
+mN <- NaiveBayes(Species ~., data=iris)
+# Species 별 각각 변수가 어떻게 분류되어 있는지 결과 확인
+plot(mN)
+
+#install.packages("party")
+library(party)
+
+# ?
+data(iris)
+iris$Petal.Width.c <- cut(iris$Petal.Width, 5)
+a <- ctree(Species ~.,data=iris)
+plot(a)
+
+rm(list=ls(all=TRUE)) #--- 작업 영역에 저장된 데이터 모두 삭제
+
+
+```
+```{r}
+#Amelia를 이용한 결측값 처리
+#install.packages("Amelia")
+library(Amelia)
+
+data(freetrade)
+head(freetrade)
+str(freetrade)  
+summary(freetrade) #Tariff는 NA가 58개인 것을 알 수 있음.
+
+# imputation을 해당 변수의 대표값으로 대체, 
+#m=5 5개 imputation 데이터셋 생성, ts는 시계열 정보, cs는 cross-sectional 분석에 포함될 정보
+#연도, 국가를 고려해 모든 freetrade 정보를 활용해 결측값에 대한 imputation이 이루어진다.
+a.out <- amelia(freetrade, m=5, ts="year", cs="country") 
+hist(a.out$imputations[[3]]$tariff, col="grey", border="white")
+save(a.out, file = "data/imputations.RData")  #imputations.RData 파일생성.
+write.amelia(obj=a.out, file.stem="data/outdat") # outdata 12345.csv 파일 생성
+missmap(a.out)       #Missingness Map 정보
+
+
+#전체 데이터에서 이상값이 있는 로우(Row)를 파악할 수 있는 방법
+#install.packages("DMwR")
+library(DMwR)
+iris2 <- iris[,1:4]
+Outlier.scores <- lofactor(iris2, k=5)
+plot(density(Outlier.scores))
+
+Outliers <- order(Outlier.scores, decreasing=T)[1:5] # 5개 이상치 추출
+Outliers
+n <- nrow(iris2)  # iris2의 전체 Row수
+labels <- 1:n
+labels[-Outliers] <- "."  
+biplot(prcomp(iris2), cex=.8, xlabs=labels) # 이상값을 화면에 표시
+
+pch <- rep(".", n)
+pch[Outliers] <- "+"
+col <- rep("black", n)
+col[Outliers] <- "red"
+pairs(iris2, pch=pch, col=col)
+
+
+```
+
+
+#정형 데이터 마이닝
+##1. 분류분석
+###-----------------------------------------------------------------------------
+### 분류 분석
+###-----------------------------------------------------------------------------
+
+```{r}
+data(list="iris", package="datasets")
+data <- iris
+dim(data)
+head(data)
+attributes(data)
+summary(data)
+
+idx <- sample(2, nrow(data), replace=TRUE, prob=c(0.7, 0.3))
+train <- data[idx == 1, ]               #--- 학습용 데이터셋
+test <- data[idx == 2, ]                #--- 테스트용 데이터셋
+rm(idx)
+
+library(party)
+(m <- ctree(Species ~ ., data = train))  #--- 모델 생성
+table(predict(m), train$Species)         #--- 실제값과 예측값 비교
+#--- 상단 (x축) : 실제값
+#--- 좌측 (y축) : 예측값
+
+plot(m)
+plot(m, type="simple")
+
+(pred <- predict(m, newdata = test))
+table(pred, test$Species)
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+```
+```{r}
+data(list="iris", package="datasets")
+data <- iris
+summary(data)
+
+idx <- sample(2, nrow(data), replace=TRUE, prob=c(0.7, 0.3))
+train <- data[idx == 1, ]               #--- 학습용 데이터셋
+test <- data[idx == 2, ]                #--- 테스트용 데이터셋
+#install.packages("randomForest")
+library(randomForest)
+(m <- randomForest(Species ~ ., data = train, ntree = 100, proximity = TRUE))
+#--- ntree = 100 : 최대 트리개수 100개
+#--- proximity = TRUE : 다양한 트리분할 시도
+table(predict(m), train$Species)
+importance(m)
+#--- Petal.Width가 클래스를 분류하는데 가장 큰 영향을 줌
+
+plot(m)
+#--- 트리 개수에 따라 오차가 개선이 되는 것을 클래스별 및 전체 평균으로 보여 주며
+#--- 약 20개 정도에서 오차가 최소화되고 그 이상인 경우 오차가 개선되지 않음을 알 수 있다.
+varImpPlot(m)
+#--- 변수의 상대적 중요도를 챠트로 표시
+
+(pred <- predict(m, newdata = test))
+table(pred, test$Species)
+plot(margin(m, test$Species))
+
+
+data(kyphosis, package="rpart")
+data <- kyphosis
+idx <- sample(2, nrow(data), replace=TRUE, prob=c(0.75, 0.25))
+train <- data[idx == 1, ]               #--- 학습용 데이터셋
+test <- data[idx == 2, ]                #--- 테스트용 데이터셋
+
+
+```
+
+```{r}
+library(party)
+(m <- cforest(Kyphosis ~ Age + Number + Start, data = train, control = cforest_unbiased(mtry = 3)))
+
+(m1 <- ctree(Kyphosis ~ Age + Number + Start, data = train))
+plot(m1)
+
+pred <- predict(m, newdata = test)
+table(predict(m), train$Kyphosis)
+
+correct <- pred == test$Kyphosis
+print(paste("% of predicted classifications correct", mean(correct) * 100))
+library(party)
+probabilities <- 1 - unlist(treeresponse(m, newdata = test), use.names = F)[seq(1, nrow(test) *2, 2)]
+
+library(ROCR)
+pred1 <- prediction(probabilities, test$Kyphosis)
+perf <- performance(pred1, "tpr", "fpr")
+plot(perf, main = "ROC curve", colorize = T)
+perf <- performance(pred1, "lift", "rpp")
+plot(perf, main = "lift curve", colorize = T)
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+```
+```{r}
+set.seed(1)
+library(caret)
+idx <- createDataPartition(iris$Species, p = 0.7)[[1]]
+trainDesc <- iris[idx, -ncol(iris)]
+testDesc <- iris[-idx, -ncol(iris)]
+trainClass <- iris$Species[idx]
+testClass <- iris$Species[-idx]
+rm(idx)
+
+prop.table(table(iris$Species))
+prop.table(table(trainClass))
+library(caret)
+(procValues <- preProcess(trainDesc, method = c("center", "scale")))
+(trainScaled <- predict(procValues, trainDesc))
+(testScaled <- predict(procValues, testDesc))
+
+
+```
+
+
+##2. 예측분석
+###-----------------------------------------------------------------------------
+### 예측 분석
+###-----------------------------------------------------------------------------
+```{r}
+data(airquality, package="datasets")
+data <- airquality
+summary(data)
+hist(data$Ozone, xlim = c(0, 200), ylim = c(0, 50))
+airq <- subset(airquality, !is.na(Ozone))
+library(party)
+(airct <- ctree(Ozone ~ ., data = airq))
+plot(airct)
+plot(airct, type = "simple")
+plot(airct, terminal_panel = node_density)
+plot(airq$Ozone, airq$pred.Ozone, xlim = c(0, 200), ylim = c(0, 200))
+
+(m <- lm(Ozone ~ ., data = airq[, c(1:4)]))
+summary(m)
+plot(airq$Ozone, predict(m, newdata = airq[, c(1:4)]), xlim = c(0, 200), ylim = c(0, 200))
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+```
+
+
+
+##3. 군집분석
+###-----------------------------------------------------------------------------
+### 군집 분석(특성에 따라 고객을 여러 개의 배타적인 집단으로 나누는 것)
+1. 목적 : 적절한 군집으로 나누는 것 2. 군집의 특성, 군집간의 차이 등에 대한 분석
+2. 군집방법 : 임의(많이 사용되나 논란의 여지가 있다), 통계적 기법(실무 적용성에 대한 논란이 있다)
+           그래서 여기서는 (최신군집화 방법, 프로파일링 방법) 사용.
+3. 세분화 방법
+ - 통계적 기법을 이용한 clustering, k-means 등 있다 : 전통적 세분화 방법의 문제점 : 문제점은 단순 격자는 시간이 오래 소요되고, 후처리에 병합할 때 원칙이 명확하지 않고, 변수의 특성으로 의미없이 고객집단이 이동하게 된다는 것, 집단이 변하면 관리할수 없게 된다.  이런 문제를 해결하기 위해 k-means에 SRM을 결합한 방식 세부집단이 변화가 많이 않아, 집단의 안정성으로 유지된다.
+- 목표기반 세분화 방법
+고객가치 또는 특정상품을 구매하는 고객을 타깃으로 세분화 방법 : A,B,C 집단(고객가치 세분화)중 우수고객이 A 60%, B 30%, C 5% 있다면 A,B집단의 차이는 우수고객의 비중이 유사하나 구매주기가 다를 수 있다.
+-프로파일링 방법
+###-----------------------------------------------------------------------------
+(data <- read.table("data/ADV_4_4_001.csv", header=TRUE, sep=",", 
+                    stringsAsFactors=FALSE, na.strings=c('NIL'), 
+                    comment.char="#", encoding="UTF-8"))
+(round(dist(data), digits = 2))        #--- 유크리드 거리
+(round(dist(data, method = "manhattan"), digits = 2))   #--- 맨하탄 거리
+(round(dist(data, method = "canberra"), digits = 2))    #--- 캔버라 거리
+(round(dist(data, method = "minkowski"), digits = 2))   #--- 민코우스키 거리
+
+#--- 최단연결법으로 계층적 군집화
+{dist(data)}^2
+(m <- hclust(dist(data)^2, method = "single"))
+plot(m)
+
+#--- 최장연결법으로 계층적 군집화
+(m <- hclust(dist(data)^2, method = "complete"))
+plot(m)
+
+#--- 와드연결법으로 계층적 군집화
+(m <- hclust(dist(data)^2, method = "ward"))
+plot(m)
+
+#--- 평균연결법으로 계층적 군집화
+(m <- hclust(dist(data)^2, method = "average"))
+plot(m)
+
+
+```{r}
+data <- iris
+data$Species <- NULL
+(m <- kmeans(data, 3))
+table(iris$Species, m$cluster)
+plot(data[c("Sepal.Length", "Sepal.Width")], col = m$cluster)
+
+(m <- kmeans(data, 4))
+table(iris$Species, m$cluster)
+plot(data[c("Sepal.Length", "Sepal.Width")], col = m$cluster)
+
+
+library(HDclassif)
+data(wine, package="HDclassif")
+data <- wine
+head(data)
+
+str(data)
+(data <- na.omit(data[, -1]))
+data <- scale(data)
+
+wss <- 0
+for (i in 1:15) {
+  wss[i] <- sum(kmeans(data, centers = i)$withinss)
+}
+plot(1:15, wss, type = "b", xlab = "Number of Clusters", ylab = "Within group sum of squares")
+#--- 3까지 그래프가 급격히 감소하므로, 군집을 3개로 해주는 것이 적합함
+
+(m <- kmeans(data, 3))
+table(wine$class, m$cluster)
+#plot(data[c("V1", "V2")], col = m$cluster)
+#points(m$centers[, c("V1", "V2")], col = 1:3, pch = 8, cex = 2)
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+```
+```{r}
+(m <- kmeans(iris[, -5], 3))
+table(iris$Species, m$cluster)
+
+library(cluster)
+(m <- pam(iris[, -5], 3))
+table(iris$Species, m$cluster)
+summary(m)
+plot(m)
+
+
+data(AdultUCI, package = "arules")
+data <- AdultUCI
+(idx <- sample(nrow(data[complete.cases(data), ]), 1000))
+system.time(m <- kmeans(data[idx, c(1, 3, 5, 11:13)], 2))
+table(m$cluster, data[idx, "income"])
+
+library(cluster)
+system.time(m <- pam(data[idx, c(1, 3, 5, 11:13)], 2))
+table(m$cluster, data[idx, "income"])
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+```
+```{r}
+data <- iris
+(idx <- sample(1:dim(data)[1], 40))
+(train <- iris[idx, ])
+train$Species <- NULL
+(m <- hclust(dist(train), method = "ave"))
+plot(m, hang = -1, labels = iris$Species[idx])
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+
+data <- iris[-5]
+library(fpc)
+(m <- dbscan(data, eps = 0.42, MinPts = 5))
+table(m$cluster, iris$Species)
+plot(m, data)
+
+library(fpc)
+(m <- dbscan(data, eps = 0.42, MinPts = 10))
+table(m$cluster, iris$Species)
+plot(m, data)
+
+library(fpc)
+(m <- dbscan(data, eps = 0.5, MinPts = 5))
+table(m$cluster, iris$Species)
+plot(m, data)
+plot(m, data[c(1, 4)])
+plotcluster(data, m$cluster)
+
+set.seed(435)
+(idx <- sample(1:nrow(iris), 10))
+newData <- iris[idx, -5]
+(newData <- newData + matrix(runif(10 * 4, min = 0, max = 0.2), nrow = 10, ncol = 4))
+(pred <- predict(m, data, newData))
+plot(data[1, 4], col = 1 + m$cluster)
+points(newData[c(1, 4)], pch = "*", col = 1 + pred, cex = 3)
+table(pred, iris$Species[idx])
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+
+(data <- rbind(cbind(rnorm(10, 0, 0.5), rnorm(10, 0, 0.5)),
+               cbind(rnorm(15, 5, 0.5), rnorm(15, 5, 0.5)),
+               cbind(rnorm(3, 3.2, 0.5), rnorm(3, 3.2, 0.5))))
+(m <- fanny(data, 2))
+plot(m)
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+```
+
+
+##4. 연관분석
+###-----------------------------------------------------------------------------
+### 연관 분석 개념(흔히 장바구니 분석, 서열분석이라 불린다.) 
+1. 기업의 데이터베이스에서 상품의 구매, 서비스등 일련의 거래 또는 사건들 간의 규칙을 발견하기 위해 적용(항목은 2개 이상)
+2. 손님의 장바구니에 들어있는 품목 간 관계를 알아본다는 의미에서 장바구니분석이라고 부른다. 
+3. 한 장바구니에 무엇이 같이 들어 있는지의 대한 분석(A를 산 다음에 B를 산다'가 연관석분석이다)
+데이터가(구매 내역) 쌓이면 '어느 고객이 어떤 제품을 같이 구매할까?'에 대한 궁금증을 해결하기 위해 연관성분석을 실시한다.(효율적인 매장 진열, 패키지 상품의 개발, 교차판매-묶음판매 전략 구성, 기획상품의 결정, 온라인 쇼핑몰에서 상품 추천 등에 응용)
+
+측도: 연관규칙이 유용한 규칙인지 가늠하기 위해서는 지지도(support), 신뢰도(confidence), 향상도(lift) 값을 잘 보고 규칙을 선택해야 한다.
+지지도 : 전체 거래 중 항목 A와 항목 B를 동시에 포함하는 거래의 비율
+신뢰도 : 항목 A를 포함한 거래 중에서 A와 항목 B가 같이 포함될 비율: 'A한 사람이 B도 하더라'
+향상도 : A가 주어지지 않았을때 품목 B의 확률에 비해 A가 주어졌을 때의 품목 B의 확률의 증가 비율
+향상도 1 서로 독립(과자와 후추), >1 양의 상관관계(빵과 버터), <1 음의 상관관계(밀과 쌀)
+
+연관 규칙의 조건
+1. 연관 규칙은 "if A, then B"와 같은 형식으로 표현
+2. 모든 "if A then B" 규칙은 유용한 것이 아님
+3. 찾은 규칙이 유영하게 사용되기 위해서는 : 두 품목이 함께 구매한 경우 일정 수준 이상이여야 함(일정 이상의 지지도), 품목 A를 포함하는 거래 중 품목 B를 구입하는 경우의 수가 일정 수준 이상이여야 함(일정 이상의 실뢰도)
+ : 즉 연관성 분석을 수행할때 모든 경우의 수를 분석하는 것은 불필요한 일이므로 최소 지지도를 정해 규칙을 도출한다. 처음에는 5%정도의 임의 설정해 산출해 보고 속도와 의미가 현실적인지, 규칙을 충분히 도출됐는지에 따라 지지도 조절
+
+연관규칙분석 절차(최소 지지도를 갖는 연관규칙을 찾는 대표적인 방법 Apriori 알고리즘)
+1. 최소 지지도를 정한다
+2. 개별 품목 중 최소 지지도를 넘는 모든 품목을 찾는다.
+3. 2에서 찾은 개별 품목만을 이용해 최소 지지도를 넘는 2가지 품목 집합을 찾는다.
+4. 위의 두 절차에 찾는 품목 집합을 결합해 최소 지지도를 넘는 3가지 품목 집합을 찾는다.
+5. 반복적으로 수행해 최소 지지도가 넘는 빈발품목 집합을 찾는다.
+
+###-----------------------------------------------------------------------------
+```{r}
+src <- matrix(c(1, 2, 4, 5, 7, 9,
+                5, 3, 2, 1, 5, 3,
+                3, 4, 5, 6, 1, 2,
+                4, 3, 4, 5, 6, 4,
+                1, 2, 3, 3, 4, 6), ncol=6)
+library(arules)
+(data <- as(src, "transactions"))
+summary(data)
+
+
+src <- list(c("w", "e", "g"),
+            c("e", "j"),
+            c("q","k", "d"),
+            c("e", "d"),
+            c("t", "c", "e", "r"))
+names(src) <- paste("Transnumber", c(1:5), sep = "")
+src
+library(arules)
+data <- as(data,"transactions")
+inspect(data) # 거래전표 데이터 내용을 살펴 볼 수 있다.(트랜젝션 단위로 item 데이터 보여줌)
+
+
+#--- 비엔나대학에서 2003년부터 2008년까지 다운로드된 ePub 전자책 관련 정보
+data(Epub, package = "arules")
+data <- Epub
+summary(data)
+length(data)
+
+library(arules)
+inspect(head(data))
+head(as(data, "list"))
+transactionInfo(data[size(data) > 30])  #여기서 size는 summary에서 sizes 정보 : 즉 트랜젝션에 대한 item의 갯수.
+
+library(arules)
+head((year <- strftime(as.POSIXlt(transactionInfo(data)[["TimeStamp"]]), "%Y")))
+
+
+```
+```{r}
+#--- 인구사회 통계 정보
+data(AdultUCI, package = "arules")
+data <- AdultUCI
+data[1:2, ]
+
+data[["fnlwgt"]] <- NULL
+data[["education-num"]] <- NULL
+summary(data[["age"]])
+
+head(cut(data[["age"]], c(15, 37, 100)))      #--- 연령을 15, 37, 100세로 구간화
+table(cut(data[["age"]], c(15, 37, 100)))
+
+data[["age"]] <- ordered(cut(data[["age"]], c(15, 25, 45, 65, 100)), 
+                         labels = c("young", "middle", "senior", "old"))
+data[["hours-per-week"]] <- ordered(cut(data[["hours-per-week"]], c(0, 25, 40, 60, 168)),
+                                  labels = c("part-time", "full-time", "overtime", "workaholic"))
+data[["capital-gain"]] <- ordered(cut(data[["capital-gain"]], c(-Inf, 0, median(data[["capital-gain"]][data[["capital-gain"]] > 0]), Inf)),
+                                  labels = c("None", "Low", "Hith"))
+data[["capital-loss"]] <- ordered(cut(data[["capital-loss"]], c(-Inf, 0, median(data[["capital-loss"]][data[["capital-loss"]] > 0]), Inf)),
+                                  labels = c("none", "low", "hith"))
+View(data)
+
+(data <- as(data, "transactions"))
+summary(data)
+
+library(arules)
+itemFrequencyPlot(data, support = 0.1, cex.names = 0.8) #지지도가 0.1일때,즉 10%
+
+library(arules)
+(m <- apriori(data,parameter = list (support = 0.01, confidence = 0.6)))
+summary(m)
+
+library(arules)
+small <- subset(m, subset = rhs %in% "income=small" & lift > 1.2)
+length(small)
+large <- subset(m, subset = rhs %in% "income=large" & lift > 1.2)
+length(large)
+
+inspect(head(sort(small, by = "confidence"), n = 3))
+inspect(head(sort(large, by = "confidence"), n = 3))
+
+library(arules)
+write(small, file="data/small.txt", sep = "\t", col.names = NA)
+
+library("pmml")
+m1 <- pmml(small)
+saveXML(m1, file = "data/data.xml")
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+###-----------------------------------------------------------------------------
+
+
+```
+
+
+
+#비정형 데이터 마이닝
+##1. 텍스트 마이닝
+###-----------------------------------------------------------------------------
+### 텍스트 마이닝
+###-----------------------------------------------------------------------------
+```{r}
+library(tm)
+#library(SnowballC)
+getReaders()                            #--- Reader의 종류 확인
+
+#--- Vector에 저장된 Text 읽기
+docs <- c("This   is a text", "This another one.", "My name is Eric")
+(doc <- Corpus(VectorSource(docs)))
+rm(docs)
+
+summary(doc)
+inspect(doc[1])                         #--- 첫번째 문서 조회
+
+#--- Text 파일 읽기
+#--- C:/Program Files/R/R-3.0.3/library/tm/texts/txt/ 폴더 지정
+(folder <- system.file("texts", "txt", package = "tm"))
+(doc <- Corpus(DirSource(folder), readerControl = list(language = "lat")))
+rm(folder)
+
+summary(doc)
+inspect(doc[1])                         #--- 첫번째 문서 조회
+
+#--- XML 파일 읽기
+#--- C:/Program Files/R/R-3.0.3/library/tm/texts/crude/ 폴더 지정
+(folder <- system.file("texts", "crude", package = "tm"))
+(doc <- Corpus(DirSource(folder), readerControl = list(reader = readReut21578XML)))
+rm(folder)
+
+summary(doc)
+inspect(doc[1])                         #--- 첫번째 문서 조회
+
+getTransformations()                    #--- tm_map용 함수 목록
+doc[[1]]                                #--- 첫번째 문서 조회
+#(doc <- tm_map(doc, as.PlainTextDocument))[[1]]                #--- XML 문서를 Text로 변환
+#(doc <- tm_map(doc, stripWhitespace))[[1]]                     #--- 두개 이상의 공백을 하나의 공백으로 치환
+(doc <- tm_map(doc, tolower))[[1]]                             #--- 소문자로 변환
+(doc <- tm_map(doc, removePunctuation))[[1]]                   #--- 구두점 삭제
+(doc <- tm_map(doc, removeWords, stopwords("english")))[[1]]   #--- Stopword (조사, 띄어쓰기, 시제 등)를 제거하고 표준화
+(doc <- tm_map(doc, stripWhitespace))[[1]]                     #--- 두개 이상의 공백을 하나의 공백으로 치환
+#(doc <- tm_map(doc, stemDocument))[[1]]                        #--- 어근만 추출
+#(doc <- tm_map(doc, stemCompletion, dictionary = doc))[[1]]    #--- 어근으로 원래 단어 유추
+#    (a <- c("mining", "miners", "mining"))
+#    (b <- stemDocument(a))
+#    (d <- stemCompletion(b, dictionary=a))
+
+#(doc <- tm_map(doc, removeNumbers))[[1]]                       #--- 숫자 삭제
+#removeURL <- function(x) gsub("http[[:alnum:]]*", "", x)
+#(doc <- tm_map(doc, removeURL))[[1]]                           #--- URL 삭제
+#rm(removeURL)
+
+#(doc <- tm_map(doc, gsub, pattern = "diamond", replacement = "aaa"))[[1]]   #--- 문자열 치환
+#(doc <- tm_map(doc, grep, pattern = "diamond"))[[1]]           #--- diamond가 포함된 라인 번호 반환
+inspect(doc[1])                         #--- 첫번째 문서 조회
+
+
+#writeCorpus(doc)                        #--- Corpus 저장
+#writeCorpus(doc[1], filenames="01.txt") #--- 첫번째 Corpus 저장
+
+
+
+```
+###-----------------------------------------------------------------------------
+### DocumentTermMatrix
+(m <- DocumentTermMatrix(doc))          #--- 텍스트 문서로 Document Term Matrix 생성
+#--- Non-/sparse entries : 단어가 있는 entry / 단어가 없는 entry
+#--- Sparsity : 문서별 단어중 한번도 사용하지 않은 비율
+m$nrow                                  #--- 문서 (document) 개수
+m$ncol                                  #--- 단어 (term) 개수
+m$dimnames                              #--- 문서 (document)와 단어 (term) 목록
+m$i                                     #--- 문서 (document) 인덱스
+m$j                                     #--- 단어 (term) 인덱스
+m$v                                     #--- 문서에서 단어의 발생 빈도
+
+inspect(m)
+inspect(m[1:5, 110:120])                #--- 처음 5개 문서의 110번째에서 120번째 단어의 분포를 확인
+
+findFreqTerms(m, 10)                    #--- 10회 이상 사용된 단어 표시
+findFreqTerms(m, 10, 15)                #--- 10회 이상, 15회 이하 사용된 단어 표시
+findAssocs(m, "oil", 0.65)              #--- "oil" 단어와 연관성(같이 사용될 확률)이 65% 이상이 단어를 표시
+
+dic <- c("prices", "crude", "oil")      #--- 여기 기술된 단어로만 결과 확인
+(m <- DocumentTermMatrix(doc, list(dictionary = dic)))
+inspect(m)
+
+###-----------------------------------------------------------------------------
+### TermDocumentMatrix
+(m <- TermDocumentMatrix(doc))          #--- Term Document Matrix 생성
+#--- Sparsity : 문서별 단어중 한번도 사용하지 않은 비율
+m$nrow                                  #--- 단어 (term) 개수
+m$ncol                                  #--- 문서 (document) 개수
+m$dimnames                              #--- 단어 (term)와 문서 (document) 목록
+m$i                                     #--- 단어 (term) 인덱스
+m$j                                     #--- 문서 (document) 인덱스
+m$v                                     #--- 단어별 문서에서 발생 빈도
+
+#data(crude, package = "tm")
+#(m <- TermDocumentMatrix(crude))        #--- Term Document Matrix 생성
+#rm(crude)
+
+inspect(m)
+inspect(m[110:120, 1:5])                #--- 처음 110번째에서 120번째 단어별 5개 문서에서 분포를 확인
+
+findFreqTerms(m, 10)                    #--- 10회 이상 사용된 단어 표시
+findFreqTerms(m, 10, 15)                #--- 10회 이상, 15회 이하 사용된 단어 표시
+findAssocs(m, "oil", 0.65)              #--- "oil" 단어와 연관성(같이 사용될 확률)이 65% 이상이 단어를 표시
+
+(frequency <- rowSums(as.matrix(m)))    #--- 단어별 발생 건수 계산
+(frequency <- subset(frequency, frequency >= 10))   #--- 10건 이상 발생한 단어 추출
+
+library(ggplot2)
+#--- coord_flip : 가로 세로 변경
+qplot(names(frequency), frequency, geom = "bar") + coord_flip()
+barplot(frequency, las = 2)
+
+###-----------------------------------------------------------------------------
+(m <- removeSparseTerms(m, 0.70))       #--- Sparsity가 70% 이상인 경우 삭제
+
+#--- 계층적 군집 모, ward : 화드연결법
+#--- scale : 데이터 정규화, dist : 유클리드 거리
+(data <- as.matrix(m))
+(fit <- hclust(dist(scale(data)), method = "ward"))
+plot(fit)
+rect.hclust(fit, k = 5)                 #--- 5개의 그룹으로 구분
+(groups <- cutree(fit, k = 5))          #--- 단어별로 그룹 지정
+
+
+(m <- t(m))                             #--- DocumentTermMatrix로 변환
+k <- 8
+(kmeansResult <- kmeans(m, k))          #--- k-평균 군집 모형
+for (i in 1:k) {
+  cat(paste("cluster", i, ": ", sep = ""))
+  s <- sort(kmeansResult$centers[i,], decreasing = T)
+  cat(names(s), "\n")
+}
+
+library(fpc)
+(pamResult <- pamk(m, metric = "manhatttan"))
+(k <- pamResult$nc)
+
+(pamResult <- pamResult$pamobject)
+for (i in 1:k) {
+  cat(paste("cluster", i, ": "))
+  cat(colnames(pamResult$medoids)[which(pamResult$medoids[i, ] == 1)], "\n")
+}
+#--- 아래 문장은 오류가 발생함
+plot(pamResult, color = F, labels = 4, lines = 0, cex = .8, col.clus = 1, col.p = pamResult$clustering)
+
+
+
+##2. 워드 클라우드
+###-----------------------------------------------------------------------------
+### 워드 클라우드
+###-----------------------------------------------------------------------------
+```{r}
+library(gdata)
+(data <- as.data.frame(available.packages()))   #--- 패키지 목록 추출
+head(data <- gdata::trim(unlist(strsplit(as.character(data$Depends), ','))))   #--- 패키지 의존 정보 추출
+head(data <- gsub('[ \\(].*|\\n', '', data))   #--- 다양한 문자 부호 제거
+
+head(m <- table(data))                      #--- 단어의 빈도수 테이블
+
+library(wordcloud)
+wordcloud(names(m), as.numeric(m), colors = c("green", "red"))
+wordcloud(names(m), log(as.numeric(m)), colors = c("green", "red"))
+
+
+library(wordcloud)
+head(m <- as.matrix(m))
+head(wordFreq <- sort(rowSums(m), decreasing = TRUE) )
+head(grayLevels <- gray((wordFreq + 10) / (max(wordFreq) + 10)))
+wordcloud(words = names(wordFreq), freq = wordFreq, min.freq = 3, random.order = F, colors = grayLevels)
+
+
+```
+
+
+
+##3. 감정 분석
+###-----------------------------------------------------------------------------
+### 감성 분석
+###-----------------------------------------------------------------------------
+#--- 문장을 입력받아 문장과 점수를 반환
+#--- 점수 = 긍정 점수 - 부정 점수
+#---     긍정 점수 : 긍정 단어 (pos.words)가 포함된 개수
+#---     부정 점수 : 부정 단어 (neg.words)가 포함된 개수
+
+```{r}
+scores <- function(sentences, pos.words, neg.words, .progress='none') { #--- 점수와 문장을 반환
+  require(plyr)
+  require(stringr) 
+  scores = laply(
+    sentences, 
+    function(sentence, pos.words, neg.words) {
+      sentence = gsub('[[:punct:]]', '', sentence)   #--- 구두점 삭제
+      sentence = gsub('[[:cntrl:]]', '', sentence)   #--- 특수기호 삭제
+      sentence = gsub('\\d+', '', sentence)  	       #--- 숫자 삭제
+      sentence = tolower(sentence)                   #--- 소문자로 변환
+      
+      word.list = str_split(sentence, '\\s+')        #--- 하나 이상의 공백으로 단어 추출
+      words = unlist(word.list)                      #--- list를 벡터로 변환
+      pos.matches = match(words, pos.words)          #--- 긍정의 점수 계산 (긍정 단어와 매핑되는 개수 산정)
+      pos.matches = !is.na(pos.matches)
+      neg.matches = match(words, neg.words)          #--- 부정의 점수 계산 (부정 단어와 매핑되는 개수 산정)
+      neg.matches = !is.na(neg.matches)     
+      score = sum(pos.matches) - sum(neg.matches)
+      return (score)
+    }, 
+    pos.words, neg.words, .progress=.progress
+  )
+  scores.df = data.frame(score=scores, text=sentences)
+  return(scores.df)
+}
+
+(pos.word <- scan("data/positiveWords.txt", what = "character", comment.char = ";"))   #--- 긍정 단어
+(pos.words <- c(pos.word, "upgade"))
+(neg.word <- scan("data/negativeWords.txt", what = "character", comment.char = ";"))   #--- 부정 단어
+(neg.words <- c(neg.word, "wait", "waiting"))
+
+(sample <- c("You're awe some and I love you", "I hate and hate and hate. So angry. Die!",
+             "Impressed and amazed: you are peer less in your achievement of unparalleled mediocrity.", "I love you"))
+(result <- scores(sample, pos.words, neg.words))
+library(ggplot2)
+qplot(result$score)
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+```
+
+
+##4. 한글 처리
+###-----------------------------------------------------------------------------
+### 한글 처리
+###-----------------------------------------------------------------------------
+```{r}
+#--- 파일 읽기
+finp <- file("data/movieComment.txt", encoding = "UTF-8")
+lines <- readLines(finp)
+close(finp)
+rm(finp)
+
+library(KoNLP)
+#library(igraph)
+#library(combinat)
+extractNoun("연습을 해보고자 한다. 명사가 잘 추출되는지 보자. 빨간색으로 글씨를 쓴다.")
+sapply("연습을 해보고자 한다. 명사가 잘 추출되는지 보자. 빨간색으로 글씨를 쓴다.", extractNoun)
+system.time(nouns <- sapply(head(lines, 1000), extractNoun, USE.NAMES = FALSE))
+rm(nouns)
+
+library(help = "KoNLP")
+
+head(data <- Map(extractNoun, head(lines, 1000)))   #--- 각 문장에서 명사 추출
+(data <- unique(data))[[1000]]                  #--- 라인별 데이터를 unique하게
+(data <- sapply(data, unique))[[1000]]          #--- 각 라인내 데이터를 unique하게
+
+head(data <- sapply(data, function(x) {             #--- 2자 이상 4자 이하의 한글 단어 추출
+  Filter(function(y) {
+    nchar(y) <= 4 && nchar(y) > 1 && is.hangul(y)
+  },
+  x)
+}))
+head(data <- Filter(function(x) { length(x) >= 2 }, data))   #--- 단어가 2개 이상 포함된 문장만 추출
+head(names(data) <- paste("Tr", 1:length(data), sep = ""))   #--- 데이터에 행 이름 지정
+
+library(arules)
+head(data <- as(data, "transactions"),1)
+
+library(arules)
+head(dataTab <- crossTable(data))
+
+#--- 빈도수 5%, 같이 있을 확률이 10%인 단어 목록 추출
+#---     최소지지도 5% 이상, 최소신뢰도 10% 이상인 연관 규칙 탐색
+(m <- apriori(data, parameter = list(supp = 0.05, conf = 0.1)))   
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+```
+
+
+##5. 사회연결망 분석
+###-----------------------------------------------------------------------------
+### 사회연결망 분석
+###-----------------------------------------------------------------------------
+```{r}
+#data <- read.table("http://sna.stanford.edu/sna_R_labs/data/Krack-High-Tec-edgelist-Advice.txt")
+#write.table(data, file="data/ADV_4_5_001.csv", append=FALSE, quote=FALSE, sep=",", row.names=FALSE)
+data01 <- read.table("data/ADV_4_5_001.csv", header=TRUE, sep=",", 
+                     stringsAsFactors=FALSE, na.strings=c('NIL'), 
+                     comment.char="#", encoding="UTF-8") 
+colnames(data01) <- c("ego", "alter", "advice_tie")
+
+#data <- read.table("http://sna.stanford.edu/sna_R_labs/data/Krack-High-Tec-edgelist-Friendship.txt")
+#write.table(data, file="data/ADV_4_5_002.csv", append=FALSE, quote=FALSE, sep=",", row.names=FALSE)
+data02 <- read.table("data/ADV_4_5_002.csv", header=TRUE, sep=",", 
+                     stringsAsFactors=FALSE, na.strings=c('NIL'), 
+                     comment.char="#", encoding="UTF-8") 
+colnames(data02) <- c("ego", "alter", "friendship_tie")
+
+#data <- read.table("http://sna.stanford.edu/sna_R_labs/data/Krack-High-Tec-edgelist-ReportsTo.txt")
+#write.table(data, file="data/ADV_4_5_003.csv", append=FALSE, quote=FALSE, sep=",", row.names=FALSE)
+data03 <- read.table("data/ADV_4_5_003.csv", header=TRUE, sep=",", 
+                     stringsAsFactors=FALSE, na.strings=c('NIL'), 
+                     comment.char="#", encoding="UTF-8") 
+colnames(data03) <- c("ego", "alter", "reports_to_tie")
+
+#data <- read.csv("http://sna.stanford.edu/sna_R_labs/data/Krack-High-Tec-Attributes.csv", header = T)
+#write.table(data, file="data/ADV_4_5_004.csv", append=FALSE, quote=FALSE, sep=",", row.names=FALSE)
+(data04 <- read.table("data/ADV_4_5_004.csv", header=TRUE, sep=",",    #--- vertex의 attribute
+                      stringsAsFactors=FALSE, na.strings=c('NIL'), 
+                      comment.char="#", encoding="UTF-8") )
+
+which(data01$ego != data02$ego)         #--- 두 데이터의 ego가 동일한지 검사
+which(data01$ego != data03$ego)         #--- 두 데이터의 ego가 동일한지 검사
+which(data01$alter != data02$alter)     #--- 두 데이터의 alter가 동일한지 검사
+which(data01$alter != data03$alter)     #--- 두 데이터의 alter가 동일한지 검사
+
+#(data <- cbind(data01, data02$friendship_tie, data03$reports_to_tie))
+#names(data)[4:5] <- c("friendship_tie", "reports_to_tie")
+(data <- data.frame(ego = data01[, 1], alter = data01[, 2], advice_tie = data01[, 3],
+                    friendship_tie = data02[, 3], reports_to_tie = data02[, 3]))
+(data <- subset(data, (advice_tie > 0 | friendship_tie > 0 | reports_to_tie > 0)))
+(attrs <- cbind(1:length(data04[, 1]), data04))
+
+library(igraph)
+#(m <- graph.data.frame(data))          #--- 방향 그래프 생성
+(m <- graph.data.frame(d = data, directed = TRUE, vertices = attrs))   
+#--- 그래프
+#---     Node : vertex, link : edge
+#---     첫번째 컬럼이 두번째 컬럼을 가르키는 방향성 그래프 생성
+#---     세번째 이상의 컬럼은 edge의 attribute로 추가됨
+#--- directed : TRUE. 방향 그래프, FALSE. 무방향 그래프
+#--- vertices : vertex의 속성, 첫번째 열이 vertices의 아이디
+#(m <- as.undirected(m, mode = "collapse"))   #--- 무방향 그래프로 변환
+#(m <- as.directed(m))                        #--- 방향 그래프로 변환
+rm(list = c("data01", "data02", "data03", "data04"))
+
+#--- for 문을 사용한 vertex attribute 지정 방법
+#for (i in V(m)) {
+#  for (j in names(attrs)) {
+#    m <- set.vertex.attribute(m, j, index = i, attrs[i + 1, j])
+#  }
+#}
+#rm(list = c("i", "j", "attrs))
+
+summary(m)
+
+vcount(m)                               #--- Vertex 개수
+V(m)                                    #--- Vertex
+get.vertex.attribute(m, "name")         #--- Vertex 이름
+get.vertex.attribute(m, "AGE")          #--- Vertex attribute
+get.vertex.attribute(m, "TENURE")       #--- Vertex attribute
+get.vertex.attribute(m, "LEVEL")        #--- Vertex attribute
+get.vertex.attribute(m, "DEPT")         #--- Vertex attribute
+#--- vertex 라벨   : V(m)$label  : vertex.label
+#--- vertex 라벨 크기 : V(m)$label.cex  : vertex.label.cex
+#--- #vertex 색상   : V(m)$color  : vertex.color
+#--- vertex 크기   : V(m)$size   : vertex.size
+#--- #vertex 프레임 : V(m)$frame  : vertex.frame
+
+ecount(m)                               #--- Edge 개수
+E(m)                                    #--- Edge
+get.edge.attribute(m, "advice_tie")     #--- Edge attribute
+get.edge.attribute(m, "friendship_tie") #--- Edge attribute
+get.edge.attribute(m, "reports_to_tie") #--- Edge attribute
+get.edge.ids(m, c(20, 18, 21, 18))      #--- 20 -> 18, 21 -> 18인 edge ID 반환
+#--- edge 색상        : E(m)$color      : edge.color 
+#--- edge 화살표 크기 : E(m)$arrow.size : edge.arrow.size
+#--- edge 굵기        : E(m)$weight
+#--- edge curved      : E(m)$curved <- TRUE, FALSE
+
+
+###-----------------------------------------------------------------------------
+plot(m, main = "Krackhardt High-Tech Managers")   #--- 그래프 그리기
+
+(layouts <- layout.fruchterman.reingold(m))   #--- Fruchterman-Reingold Layout 
+plot(m, layout = layouts, main = "Krackhardt High-Tech Managers",
+     edge.arrow.size = .3)
+
+#--- vertex 색상 지정
+colorStr <- c("Black", "Red", "Blue", "Yellow", "Green")
+(vcolors <- get.vertex.attribute(m, "DEPT"))
+vcolors[vcolors == 0] <- colorStr[1]
+vcolors[vcolors == 1] <- colorStr[2]
+vcolors[vcolors == 2] <- colorStr[3]
+vcolors[vcolors == 3] <- colorStr[4]
+vcolors[vcolors == 4] <- colorStr[5]
+vcolors
+plot(m, layout = layouts, main = "Krackhardt High-Tech Managers",
+     vertex.color = vcolors, vertex.label = NA, 
+     edge.arrow.size = .3)
+plot(m, layout = layouts, main = "Krackhardt High-Tech Managers",
+     vertex.color = vcolors, 
+     edge.arrow.size = .3)
+rm(colorStr)
+
+#--- vertex 크기 지정
+(vsizes <- get.vertex.attribute(m, "TENURE"))
+plot(m, layout = layouts, main = "Krackhardt High-Tech Managers",
+     vertex.color = vcolors, vertex.size = vsizes,
+     edge.arrow.size = .3)
+
+#--- edge 색상 지정
+(colorStr <- c(rgb(1, 0, 0, .5), rgb(0, 0, 1, .5), rgb(0, 0, 0, .5)))
+#--- rgb : red, green, blue, alpha (투명도)
+(ecolors <- 1:length(E(m)))
+ecolors[E(m)$advice_tie == 1]     <- colorStr[1]
+ecolors[E(m)$friendship_tie == 1] <- colorStr[2]
+ecolors[E(m)$reports_to_tie == 1] <- colorStr[3]
+ecolors
+plot(m, layout = layouts, main = "Krackhardt High-Tech Managers",
+     vertex.color = vcolors, vertex.size = vsizes,
+     edge.color = ecolors, edge.arrow.size = .3)
+
+
+plot(m, layout = layouts, main = "Krackhardt High-Tech Managers")
+#(V(m)$color <= vcolors)
+#(V(m)$frame <= vcolors)
+(V(m)$size <- vsizes)
+(E(m)$color <- ecolors)
+(E(m)$arrow.size <- .3)
+plot(m, layout = layouts, main = "Krackhardt High-Tech Managers",
+     vertex.color = vcolors)
+
+legend(1, 1.25, legend = c("Advice", "Friendship", "Reports To"),   #--- 범례 표시
+       col = colorStr, lty = 1, cex = .7)
+rm(colorStr)
+
+#write.graph(m, file = "sns.txt", format = "pajek")   #--- 그래프를 파일로 저장
+
+rm(list = c("vsizes", "ecolors"))
+
+```
+```{r}
+library(igraph)
+#--- advice_tie에 값이 있는 것만 추출
+(mAdvice <- delete.edges(m, E(m)[get.edge.attribute(m, name = "advice_tie") == 0]))
+plot(mAdvice, layout = layouts, main = "Krackhardt High-Tech Managers",
+     vertex.color = vcolors)
+
+(mAdviceNo <- delete.vertices(mAdvice, V(mAdvice)[degree(mAdvice) == 0]))   #--- 다른 vertex와 연결되지 않은 vertex 삭제
+plot(mAdviceNo, layout = layouts, main = "Krackhardt High-Tech Managers",
+     vertex.color = vcolors)
+
+(mFriendship <- delete.edges(m, E(m)[get.edge.attribute(m, name = "friendship_tie") == 0]))
+plot(mFriendship, layout = layouts, main = "Krackhardt High-Tech Managers",
+     vertex.color = vcolors)
+
+(mReport <- delete.edges(m, E(m)[get.edge.attribute(m, name = "reports_to_tie") == 0]))
+plot(mReport, layout = layouts, main = "Krackhardt High-Tech Managers",
+     vertex.color = vcolors)
+
+#rm(list = c("mAdvice", "mFriendship", "mReport", "mAdviceNo"))
+
+###-----------------------------------------------------------------------------
+#--- 매개 중심성 (Betweenness centrality) : 한 노드가 연결망 내의 
+#---     다른 노드들 사이의 최다 경로 위에 위치할수록 그 노드의 중심성이 높다.
+(m1 <- edge.betweenness.community(m))       #--- 매개 중심성 계산
+plot(as.dendrogram(m1))                     #--- 계층적 군집
+rm(m1)
+
+###-----------------------------------------------------------------------------
+#--- 연결정도 중심성 (Degree centrality) : 한 점에 직접적으로 연결된 점들의 합
+(deg_full_in <- degree(m, mode = "in"))     #--- indegree 계산
+(deg_full_out <- degree(m, mode = "out"))   #--- outdegree 계산
+(deg_advice_in <- degree(mAdvice, mode = "in"))
+(deg_advice_out <- degree(mAdvice, mode = "out"))
+(deg_friendship_in <- degree(mFriendship, mode = "in"))
+(deg_friendship_out <- degree(mFriendship, mode = "out"))
+(deg_reports_to_in <- degree(mReport, mode = "in"))
+(deg_reports_to_out <- degree(mReport, mode = "out"))
+
+###-----------------------------------------------------------------------------
+#--- 근접 중심성 (Closeness centrality) : 한 노드로부터 다른 노드에 도달하기까지 필요한 최소 단계의 합
+(m1 <- closeness(m))
+(m1.score <- round((m1 - min(m1)) * length(m1) / max(m1)) + 1)
+(m1.colors <- rev(heat.colors(max(m1.score))))
+plot(m1)
+rm(m1)
+
+###-----------------------------------------------------------------------------
+#--- 근접 중심성 (Closeness centrality) : 한 노드로부터 다른 노드에 도달하기까지 필요한 최소 단계의 합
+(sp_full_in <- shortest.paths(m, mode = "in"))    #--- 노드간 짧은 거리 표시
+(sp_full_out <- shortest.paths(m, mode = "out"))   #--- 노드간 짧은 거리 표시
+(sp_advice_in <- shortest.paths(mAdvice, mode = "in"))
+(sp_advice_out <- shortest.paths(mAdvice, mode = "out"))
+(sp_friendship_in <- shortest.paths(mFriendship, mode = "in"))
+(sp_friendship_out <- shortest.paths(mFriendship, mode = "out"))
+(sp_reports_to_in <- shortest.paths(mReport, mode = "in"))
+(sp_reports_to_out <- shortest.paths(mReport, mode = "out"))
+
+###-----------------------------------------------------------------------------
+#--- matrix에서 행 vertex에서 열 vertex로 연결이 있으면 1을 설정
+reachability <- function(m, mode) {
+  reach_mat <- matrix(nrow = vcount(m), ncol = vcount(m))
+  for (idx in 1:vcount(m)) {
+    reach_mat[idx, ] <- 0
+    #    reaches <- subcomponent(m, idx, mode = mode)   #--- 특정 vertex와 연결된 버텍스 집합을 반환
+    reaches <- subcomponent(m, idx, mode = mode)[2:(degree(m, mode = mode)[idx] + 1)]
+    for (pos in 1:(length(reaches))) {
+      reach_mat[idx, reaches[pos]] <- 1
+    }
+  }
+  return(reach_mat)
+}
+(reach_full_in <- reachability(m, "in"))
+(reach_full_out <- reachability(m, "out"))
+(reach_advice_in <- reachability(mAdvice, "in"))
+(reach_advice_out <- reachability(mAdvice, "out"))
+(reach_friendship_in <- reachability(mFriendship, "in"))
+#(reach_friendship_out <- reachability(mFriendship, "out"))
+(reach_reports_to_in <- reachability(mReport, "in"))
+#(reach_reports_to_out <- reachability(mReport, "out"))
+
+
+```
+```{r}
+###-----------------------------------------------------------------------------
+#--- 각 노드의 통계를 데이터프레임으로 만들어 csv 포맷으로 저장
+reach_full_in_vec <- vector()           #--- in 접속 평균
+reach_full_out_vec <- vector()          #--- out 접속 평균
+reach_advice_in_vec <- vector()
+reach_advice_out_vec <- vector()
+reach_friendship_in_vec <- vector()
+reach_friendship_out_vec <- vector()
+reach_reports_to_in_vec <- vector()
+reach_reports_to_out_vec <- vector()
+
+sp_full_in_vec <- vector()              #--- in 근접 중심성 평균
+sp_full_out_vec <- vector()             #--- out 근접 중심성 평균
+sp_advice_in_vec <- vector()
+sp_advice_out_vec <- vector()
+sp_friendship_in_vec <- vector()
+sp_friendship_out_vec <- vector()
+sp_reports_to_in_vec <- vector()
+sp_reports_to_out_vec <- vector()
+
+for (i in 1:vcount(m)) {
+  reach_full_in_vec[i] <- mean(reach_full_in[i,])
+  reach_full_out_vec[i] <- mean(reach_full_out[i,])
+  reach_advice_in_vec[i] <- mean(reach_advice_in[i,])
+  reach_advice_out_vec[i] <- mean(reach_advice_out[i,])
+  reach_friendship_in_vec[i] <- mean(reach_friendship_in[i,])
+ # reach_friendship_out_vec[i] <- mean(reach_friendship_out[i,])
+  reach_reports_to_in_vec[i] <- mean(reach_reports_to_in[i,])
+#  reach_reports_to_out_vec[i] <- mean(reach_reports_to_out[i,])
+  
+  sp_full_in_vec[i] <- mean(sp_full_in[i,])
+  sp_full_out_vec[i] <- mean(sp_full_out[i,])
+  sp_advice_in_vec[i] <- mean(sp_advice_in[i,])
+  sp_advice_out_vec[i] <- mean(sp_advice_out[i,])
+  sp_friendship_in_vec[i] <- mean(sp_friendship_in[i,])
+ # sp_friendship_out_vec[i] <- mean(sp_friendship_out[i,])
+  sp_reports_to_in_vec[i] <- mean(sp_reports_to_in[i,])
+#  sp_reports_to_out_vec[i] <- mean(sp_reports_to_out[i,])
+}
+reach_full_in_vec
+reach_full_out_vec
+sp_full_in_vec
+sp_full_out_vec
+
+(node_stats_df <- cbind(
+  deg_full_in, deg_full_out,
+  deg_advice_in, deg_advice_out,
+  deg_friendship_in, deg_friendship_out,
+  deg_reports_to_in, deg_reports_to_out,
+  
+  reach_full_in_vec, reach_full_out_vec,
+  reach_advice_in_vec, reach_advice_out_vec,
+  reach_friendship_in_vec, reach_friendship_out_vec,
+  reach_reports_to_in_vec, reach_reports_to_out_vec,
+  
+  sp_full_in_vec, sp_full_out_vec,
+  sp_advice_in_vec, sp_advice_out_vec,
+  sp_friendship_in_vec, sp_friendship_out_vec,
+  sp_reports_to_in_vec, sp_reports_to_out_vec
+))
+
+```
+
+```{r}
+###-----------------------------------------------------------------------------
+#--- 그래프 분석시 통계량
+#--- 연결정도 중심성 : Degree         : mean(deg_full_in), sd(deg_full_in)
+#--- 근접 중심성     : Shortest paths : mean(sp_full_in[which(sp_full_in != Inf)]), sd(~)
+#--- 도달 가능성 : Reachability : mean(reach_full_in[which_reach_full_in != Inf]), sd(~)
+#--- ? 밀도 : Density : graph.density(m)
+#--- ? 상호관계 : Reciprocity : reciprocity(m)
+#--- ? 이행 : Transitivity : transitivity(m)
+#--- ? triad.census(m)
+
+
+#--- Triad census
+#--- 라벨 표시
+census_labels <- c("003", "012", "102", "021D", "021U",
+                   "021C", "111D", "111U", "030T", "030C",
+                   "201", "120D", "120U", "120C", "210",
+                   "300")
+(tc_full <- triad.census(m))
+(tc_advice <- triad.census(mAdvice))
+(tc_friendship <- triad.census(mFriendship))
+(tc_reports_to <- triad.census(mReport))
+(triad_df <- data.frame(census_labels, tc_full, tc_advice, tc_friendship, tc_reports_to))
+#write.csv(triad_df, "krack_triads.csv")
+
+
+
+###-----------------------------------------------------------------------------
+data(studentnets.M182, package = "NetData")
+library(igraph)
+(data <- subset(m182_full_data_frame, (friend_tie > 0 | social_tie > 0 | task_tie > 0)))
+(m <- graph.data.frame(data))
+rm(list = c("m182_full_data_frame", "friend_df", "social_df", "task_df"))
+
+summary(m)
+
+vcount(m)                               #--- Vertex 개수
+V(m)                                    #--- Vertex
+
+ecount(m)                               #--- Edge 개수
+E(m)                                    #--- Edge
+get.edge.attribute(m, "friend_tie")     #--- Edge attribute
+get.edge.attribute(m, "social_tie")     #--- Edge attribute
+get.edge.attribute(m, "task_tie")       #--- Edge attribute
+
+(mFriend <- delete.edges(m, E(m)[get.edge.attribute(m, name = "friend_tie") == 0]))
+(mSocial <- delete.edges(m, E(m)[get.edge.attribute(m, name = "social_tie") == 0]))
+(mTask <- delete.edges(m, E(m)[get.edge.attribute(m, name = "task_tie") == 0]))
+
+#--- 그래프를 무방향성으로 변경하고, 고립된 버텍스를 삭제
+summary(mFriend)
+plot(mFriend)
+(mFriend <- as.undirected(mFriend, mode = "collapse"))   #--- 무방향 그래프로 변경
+(mFriend <- delete.vertices(mFriend, V(mFriend)[degree(mFriend) == 0]))   #--- 다른 vertex와 연결되지 않은 vertex 삭제
+summary(mFriend)
+plot(mFriend)
+
+#--- community detection : walktrap과 edge-betweenness 방법
+#--- steps : random walks의 길이
+#--- modularity = TRUE : modularity scores를 결과에 포함
+(mFriend01 <- walktrap.community(mFriend, steps = 200, modularity = TRUE))
+plot(as.dendrogram(mFriend01, use.modularity = TRUE))    #--- 계층적 군집
+mFriend01$modularity
+
+
+```
+
+
+###-----------------------------------------------------------------------------
+###--- Corpus에 저장된 데이터 분석
+library(tm)
+(folder <- system.file("texts", "txt", package = "tm"))
+(doc <- Corpus(DirSource(folder), readerControl = list(language = "lat")))
+rm(folder)
+
+(doc <- tm_map(doc, stripWhitespace))[[1]]                     #--- 두개 이상의 공백을 하나의 공백으로 치환
+(doc <- tm_map(doc, tolower))[[1]]                             #--- 소문자로 변환
+(doc <- tm_map(doc, removePunctuation))[[1]]                   #--- 구두점 삭제
+(doc <- tm_map(doc, removeWords, stopwords("english")))[[1]]   #--- Stopword (조사, 띄어쓰기, 시제 등)를 제거하고 표준화
+(doc <- tm_map(doc, stripWhitespace))[[1]]                     #--- 두개 이상의 공백을 하나의 공백으로 치환
+(doc <- tm_map(doc, stemDocument, language = "english"))[[1]]  #--- 어근만 추출
+(m <- TermDocumentMatrix(doc))          #--- Term Document Matrix 생성
+
+(m2 <- as.matrix(m))                    #--- Matrix로 변환
+(m2[m2 >= 1] <- 1)                      #--- 0. 단어 미사용, 1. 단어 사용
+m2[1:10, ]
+
+(data <- m2[1:30, ] %*% t(m2[1:30, ]))  #--- 단어와 단어간의 관계로 변환
+dim(data)
+#--- 한 단어가 다른 단어와 얼마큼 함께 사용됐는지 확인 가능
+head(data)
+rm(list = c("m2", "doc"))
+
+library(igraph)
+(g <- graph.adjacency(data, weight = T, mode = "undirected"))   #--- 방향성을 삭제한 인접(adjacency) 매트릭스 생성
+(g <- simplify(g))                      #--- 그래프 단순화
+vcount(g)                               #--- Vertex 개수
+V(g)                                    #--- Vertex
+ecount(g)                               #--- Edge 개수
+E(g)                                    #--- Edge
+
+(V(g)$label <- V(g)$name)
+(V(g)$degree <- degree(g))
+
+(layout1 <- layout.fruchterman.reingold(g))   #--- 그래프를 그리기 위해 verticies의 위치를 결정
+plot(g, layout = layout1)
+
+V(g)$label.cex <- 2.2 * V(g)$degree / max(V(g)$degree) + .2
+V(g)$label.color <- rgb(0, 0, .2, .8)
+V(g)$frame.color <- NA
+
+(egam <- (log(E(g)$weight) + .4) / max(log(E(g)$weight) + .4))
+E(g)$color <- rgb(.5, .5, 0, egam)
+E(g)$width <- egam
+plot(g, layout = layout1)
+
+###-----------------------------------------------------------------------------
+#--- TermDocumentMatrix를 그래프로 분석
+(g <- graph.incidence(m, mode = c("all")))
+(nTerms <- nrow(m))                     #--- 단어 수
+(nDocs <- ncol(m))                      #--- 문서 수
+idx.terms <- 1:nTerms
+idx.docs <- (nTerms + 1):(nTerms + nDocs)
+
+V(g)$degree <- degree(g)
+V(g)$color[idx.terms] <- rgb(0, 1, 0, .5)
+V(g)$size[idx.terms] <- 6
+V(g)$color[idx.docs] <- rgb(1, 0, 0, .4)
+V(g)$size[idx.docs] <- 4
+V(g)$frame.color <- NA
+V(g)$label <- V(g)$name
+V(g)$label.color <- rgb(0, 0, 0, .5)
+V(g)$label.cex <- 1.4 * V(g)$degree / max(V(g)$degree) + 1
+E(g)$width <- .3
+E(g)$color <- rgb(.5, .5, 0, .3)
+plot(g, layout = layout.fruchterman.reingold)
+#--- 아래 코드는 동작하지 않음
+idx <- which(dimnames(data)$Terms %in% c("r", "data", "mining"))
+M <- data[-idx, ]
+tweetMatrix <- t(M) %*% M
+
+g <- graph.adjacency(tweetMatrix, weight = T, mode = "undirected")
+V(g)$degree <- degree(g)
+g <- simplify(g)
+
+V(g)$label <- V(g)$name
+V(g)$label.cex <- 1
+V(g)$label.color <- rgb(.4, 0, 0, .7)
+V(g)$size <- 2
+V(g)$frame.color <- NA
+barplot(table(V(g)$degree))
+
+idx <- V(g)$degree == 0
+V(g)$label.color[idx] <- rgb(0, 0, .3, .7)
+  V(g)$label[idx] <- paste(V(g)$name[idx], substr(df$text[idx], 1, 20), sep = ": ")
+
+egam <- (log(E(g)$weight) + .2) / max(log(E(g)$weight) + .2)
+
+E(g)$color <- rgb(.5, .5, 0, egam)
+E(g)$width <- egam
+layout2 <- layout.fruchterman.reingold(g)
+plot(g, layout = layout2)
+
+g2 <- delete.vertices(g, V(g)[degree(g) == 0])
+plot(g2, layout = layout.fruchterman.reingold)
+
+g3 <- delete.edges(g, E(g)[E(g)$wieght <= 1])
+g4 <- delete.vertices(g3, V(g3)[degree(g3) == 0])
+plot(g4, layout = layout.fruchterman.reingold)
+
+df$text[c(5, 19, 22, 23, 24, 28)]
+df$text[c(32, 34, 35, 40, 43, 46, 47, 85)]
+
+```{r}
+###-----------------------------------------------------------------------------
+(data <- matrix(sample(0:1, 15, repl=TRUE), 3, 5))
+colnames(data) <- letters[1:5]
+rownames(data) <- LETTERS[1:3]
+data
+
+library(igraph)
+(m <- graph.incidence(data, directed = FALSE))   #--- incidence. 발생
+vcount(m)                               #--- Vertex 개수
+V(m)                                    #--- Vertex
+ecount(m)                               #--- Edge 개수
+E(m)                                    #--- Edge
+data
+
+(layouts <- layout.fruchterman.reingold(m))   #--- Fruchterman-Reingold Layout 
+plot(m, layout = layouts)
+
+
+
+###-----------------------------------------------------------------------------
+search.term <- "#Rstats"
+search.size <- 50
+
+
+
+
+```
+
+
+
+library(igraph)
+library(twitteR)
+search.results <- searchTwitter(search.term, n = search.size)
+
+idx <- which(V(g)$name %in% c("data", "mining"))
+g2 <- delete.vertices(g, V(g)[idx - 1])
+g2 <- delete.vertices(g2, V(g2)[degree(g2) == 0])
+plot(g2, layout = layout.fruchterman.reingold)
+
+V1 <- vector()
+for (twt in search.results) {
+  V1 <- c(v1, screenName(twt))
+}
+v1                                      #--- Page 714
+colnames(v1) <- c("user", "tweets")
+g <- graph.empty(directed = TRUE)
+g <- add.vertices(g, nrow(v1), name = as.character(v1$user, tweets = v1$tweets))
+
+V(g)$followers <- 0
+V(g)$tweets
+
+getUser("Biff_Bruise")$getFollowers(n = 10)
+
+for (use in V(g)) {
+  tuser <- getUser(V(g)$name[usr + 1])
+  V(g)$followers[usr + 1] <- followersCount(tuser)
+  followers.list <- getUser(V(g)$name[usr + 1])$getFollowers()
+  for (tflwr in followers.list) {
+    if (screenName(tflwr) %in% V(g)$name) {
+      g <- add.edges(g, c(as.vector(V(g)[name = screenName(tflwr)]), usr))
+    }
+  }
+}
+
+g$layout <- layout.fruchterman.reingold(g)
+V(g)$size = log(V(g)$followers) * 1.8
+V(g)$label = V(g)$name
+V(g)$label.cex = 0.6
+tcolors <- rev(heat.colors(max(V(g)$tweets)))
+V(g)$color <- tcolors[V(g)$tweets]
+E(g)$arrow.size <- 0.3
+E(g)$curved <- FALSE
+E(g)$color <- "blue"
+plot(g)
+
+
+##6. 예제
+###-----------------------------------------------------------------------------
+### Exercise 1
+###-----------------------------------------------------------------------------
+
+```{r}
+###--- http://www.babelgraph.org/wp/?p=1
+#data <- read.table("http://www.babelgraph.org/data/ga_edgelist.csv", header=TRUE, sep=",", 
+#                   stringsAsFactors=FALSE, na.strings=c('NIL'), 
+#                   comment.char="#", encoding="UTF-8") 
+#write.table(data, file="data/ADV_4_5_005.csv", append=FALSE, quote=TRUE, sep=",", row.names=FALSE)
+#--- 그레이 아나토미에 등장했던 여러 주인공들 간의 연인 관계 데이터
+(data <- read.table("data/ADV_4_5_005.csv", header=TRUE, sep=",", quote="\"",
+                    stringsAsFactors=FALSE, na.strings=c('NIL'), 
+                    comment.char="#", encoding="UTF-8"))
+library(igraph)
+(g <- graph.data.frame(data, directed = FALSE))
+summary(g)
+g$layout <- layout.fruchterman.reingold(g)
+plot(g)
+
+V(g)$label <- NA                        #--- 레이블 삭제
+V(g)$size <- degree(g) * 2
+plot(g)
+
+(clo <- closeness(g))
+(clo.score <- round((clo - min(clo)) * length(clo) / max(clo)) + 1)
+(clo.colors <- rev(heat.colors(max(clo.score))))
+(V(g)$color <- clo.colors[clo.score])
+plot(g)
+
+(btw <- betweenness(g))
+(btw.score <- round(btw) + 1)
+(btw.colors <- rev(heat.colors(max(btw.score))))
+(V(g)$color <- btw.colors[btw.score])
+plot(g)
+
+#--- Girvan-Newman algorithm
+#---     http://en.wikipedia.org/wiki/Girvan%E2%80%93Newman_algorithm
+(gnc <- edge.betweenness.community(g, directed = FALSE))
+(m <- vector())
+
+```
+
+###-----------------------------------------------------------------------------
+### Exercise 2
+###-----------------------------------------------------------------------------
+
+library(twitteR)
+rdmTweets <- userTimeline("rdatamining", n = 2000)   #--- Tweet 가져오기
+(data <- do.call("rbind", lapply(rdmTweets, as.data.frame)))
+(doc <- Corpus(VectorSource(data$text)))
+
+library(tm)
+(doc <- tm_map(doc, tolower))[[1]]                             #--- 소문자로 변환
+(doc <- tm_map(doc, removePunctuation))[[1]]                   #--- 구두점 삭제
+(doc <- tm_map(doc, removeNumbers))[[1]]                       #--- 숫자 삭제
+
+removeURL <- function(x) gsub("http[[:alnum:]]*", "", x)
+(doc <- tm_map(doc, removeURL))[[1]]                           #--- URL 삭제
+rm(removeURL)
+
+(myStopwords <- c(stopwords("english"), "available", "via"))
+(idx <- which(myStopwords %in% c("r", "big")))
+(myStopwords <- myStopwords[-idx])
+(doc <- tm_map(doc, removeWords, myStopwords))[[1]]            #--- Stopword (조사, 띄어쓰기, 시제 등)를 제거하고 표준화
+rm(myStopwords)
+
+docOrg <- doc
+(doc <- tm_map(doc, stemDocument))[[1]]                        #--- 어근만 추출
+
+(doc <- tm_map(doc, stemCompletion, dictionary = docOrg))[[1]] #--- 어근으로 원래 단어 유추
+inspect(doc[11:15])
+
+(miningCases <- tm_map(docOrg, grep, pattern = "\\<mining"))
+sum(unlist(miningCases))
+
+(minerCases <- tm_map(docOrg, grep, pattern = "\\<miners"))
+sum(unlist(minerCases))
+
+(doc <- tm_map(doc, gsub, pattern = "miners", replacement = "mining"))
+
+
+(m <- TermDocumentMatrix(doc, control = list(wordLength = c(1, Inf))))
+
+idx <- which(dimnames(m)$Terms == "r")
+inspect(m[idx + (0:5), 101:110])
+
+findFreqTerms(m, lowfreq = 10)
+termFrequency <- rowSums(as.matrix(m))
+termFrequency <- subset(termFrequency, termFrequency >= 10)
+
+library(ggplot2)
+qplot(names(termFrequency), termFrequency, geom = "bar") + coord_flip()
+barplot(termFrequency, las = 2)
+
+findAssocs(m, "data", 0.25)
+findAssocs(m, "mining", 0.25)
+
+library(wordcloud)
+m <- as.matrix(m)
+wordFreq <- sort(rowSums(m), decreasing = TRUE) 
+grayLevels <- gray((wordFreq + 10) / (max(wordFreq) + 10))
+wordcloud(words = names(wordFreq), freq = wordFreq, min.freq = 3, random.order = F, colors = grayLevels)
+
+myTdm2 <- removeSparseTerms(m, sparse = 0.95)
+m2 <- as.matrix(myTdm2)
+distMatrix <- dist(scale(m2))
+
+fit <- hclust(distMatrix, method = "ward")
+plot(fit)
+rect.hclust(fit, k = 10)
+
+(groups <- cutree(fit, k = 10))
+
+m3 <- t(m2)
+k <- 8
+kmeansResult <- kmeans(m3, k)
+round(kmeansResult$centers, digit = 3)
+
+for (i in 1:k) {
+  cat(paste("cluster", i, ": ", sep = ""))
+  s <- sort(kmeansResult$centers[i,], decreasing = T)
+  cat(names(s)[1:3], "\n")
+}
+
+library(fpc)
+pamResult <- pamk(m3, metric = "manhatttan")
+(k <- pamResult$nc)
+
+pamResult <- pamResult$pamobject
+for (i in 1:k) {
+  cat(paste("cluster", i, ": "))
+  cat(colnames(pamResult$medoids)[which(pamResult$medoids[i, ] == 1)], "\n")
+}
+layout(matrix(c(1, 2), 2, 1))
+plot(pamResult, color = F, labels = 4, lines = 0, cex = .8, col.clus = 1, col.p = pamResult$clustering)
+layout(matrix(1))
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+
+###-----------------------------------------------------------------------------
+### 트위터 인증 정보 생성 및 사용하기
+###-----------------------------------------------------------------------------
+library(twitteR)
+requestURL = "http://api.twitter.com/oauth/request_token"
+accessURL  = "https://api.twitter.com/oauth/access_token"
+authURL    = "https://api.twitter.com/oauth/authorize"
+
+comsumerKey = ""
+consumerSecret = ""
+
+library(ROAuth)
+twitterCred <- OAuthFactory$new(         
+  consumerKey = consumerKey, consumerSecret = consumerSecret,
+  requestURL = requestURL, accessURL = accessURL, authURL = authURL
+)
+#--- 결과 화면에 표시되는 https 사이트로 브라우저에서 접속 합니다.
+#--- 애플리케이션을 인증하고 PIN 번호를 확인 합니다.
+
+download.file(url = "http://curl.haxx.se/ca/cacert.pem", destfile = "cacert.pem")
+
+twitterCred$handshake(cainfo = "cacert.pem")
+#--- 입력 화면에서 위에서 받은 PIN 번호를 입력 합니다.
+
+save(list = "twitterCred", file = "twitteR_credentials")
+
+load("twitteR_credentials")
+library(twitteR)
+registerTwitterOAuth(twitterCred)
+
+library(twitteR)
+#--- @hilton을 언급한 최대 1500 tweet 가져오기
+(doc <- searchTwitter("@hilton", n = 1500, cainfo = "cacert.pem"))   
+length(doc)
+doc[1:5]
+
+tweet <- doc[[1]]                       #--- 첫번째 트윗 가져오기
+tweet$getScreenName()
+tweet$getText()
+
+library(plyr)
+doc.text <- laply(doc, function(t) { t$getText() })   #-- 트윗에서 텍스트만 추출
+
+doc.text <- doc.text[!Encoding(doc.text) == "UTF-8"]
+doc.scores <- scores(doc.text, pos.words, neg.words, .progress = "text")
+hist(doc.scores$score)
+
+doc.scores$hotel = "Hilton"
+doc.scores$code = "HL"
+library(ggplot2)
+qplot(doc.scores$score)
+
+intercontinental.tweets = searchTwitter('@interconhotels', n = 1500)
+intercontinental.text = laply(intercontinental.tweets, function(t) { return t$getText()})
+intercontinental.scores = scores(intercontinental.text, pos.words, neg.words, .progress = 'text')
+intercontinental.scores$hotel = "intercontinental"
+intercontinental.scores$code = "IC"
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+
+
+###-----------------------------------------------------------------------------
+### 페이스북 인증 정보 생성 및 사용하기
+###-----------------------------------------------------------------------------
+###--- 반드시 R GUI 환경에서 실행하여야 합니다.
+library(Rfacebook)
+library(Rook)
+fb_oauth <- fbOAuth(app_id = "~", app_secret = "~")
+#--- 처음 등록시, "Facebook App Settings" URL 정보를 페이스북에 등록 합니다.
+save(fb_oauth, file = "fb_oauth")
+load("fb_oauth")
+
+(me <- getUsers("me", token = fb_oauth))
+(my_friends <- getFriends(token = fb_oauth, simplify = TRUE))
+(my_friends_info <- getUsers(my_friends$id, token = fb_oauth, private_info = TRUE))
+(my_network <- getNetwork(token = fb_oauth, format = "edgelist", verbose = TRUE))
+colnames(my_friends_info)
+table(my_friends_info$relationship_status)
+head(my_network)
+
+
+library(igraph)
+a2 <- data.frame(a)
+g <- graph.data.frame(a)
+g$layout <- layout.fruchterman.reingold(g)
+V(a3)$label <- NA
+V(a3)$width <- 0.1
+plot(a3, edge.arrow.size = 0.1, vertex.size = 5)
+
+hi <- grep("정민지", dfa$X1)
+hi2 <- grep("권도연", dfa$X1)
+hi3 <- grep("JongWoong Park", dfa$X1)
+k <- dfa[hi,]
+j <- dfa[hi2, ]
+y <- dfa[hi3, ]
+kj <- rbind(k, j, y)
+
+b <- data.frame(kj)
+b2 <- graph.data.frame(b)
+b2$layout <- layout.fruchterman.reingold(b2)
+plot(b2, edge.arrow.size = .3, vertex.size = 1)
+
+rm(list=ls(all=TRUE))                   #--- 작업 영역에 저장된 데이터 모두 삭제
+###-----------------------------------------------------------------------------
+
+
+
