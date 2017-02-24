@@ -5,7 +5,8 @@ MS_VS/
 #제외 파일
 *.bak
 *.R
-
+.Rhistory
+*.RData
 
 
 # Created by https://www.gitignore.io/api/eclipse,java
