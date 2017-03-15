@@ -7,7 +7,10 @@ MS_VS/
 *.R
 .Rhistory
 *.RData
-
+checkpoints
+*.ckpt.*
+*.gz
+*.pyc
 
 # Created by https://www.gitignore.io/api/eclipse,java
 
