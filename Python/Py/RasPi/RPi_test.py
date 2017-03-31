@@ -35,4 +35,14 @@ sleep(1)
 print(red_led.is_lit)
 
 """
-
+step 0, training accuracy 0.1
+step 100, training accuracy 0.91
+step 200, training accuracy 0.94
+step 300, training accuracy 0.97
+step 400, training accuracy 0.86
+step 500, training accuracy 0.96
+step 600, training accuracy 0.94
+step 700, training accuracy 0.96
+step 800, training accuracy 0.96
+step 900, training accuracy 0.94
+test accuracy 0.9703

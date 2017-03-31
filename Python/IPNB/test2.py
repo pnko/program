@@ -1,3 +1,4 @@
+"""
 from tensorflow.examples.tutorials.mnist import input_data
 mnist= input_data.read_data_sets("MNIST_data/", one_hot=True)
 print(mnist.train.labels[1])
@@ -26,3 +27,20 @@ for i in range(1000):
 
 print("end")
 
+"""
+
+import tensorflow as tf
+# CSV 파일 load
+filename_queue = tf.train.string_input_producer(['test.csv'])
+reader = tf.TextLineReader()
+key, value = reader.read(filename_queue)
+record_defaults = [[1], [1], [1], [1], [1],[1],[1],[1],[1]]
+col1, col2, col3, col4, col5, col6, col7, col8, col9 = tf.decode_csv(
+    value, record_defaults=record_defaults)
+# stack 묶기
+print("aaa")
+features = tf.stack([col1, col2, col3, col4,col5, col6, col7, col8, col9])
+with tf.Session() as sess:
+    example, label = sess.run([features, col5])
+print('example:', example)
+print('label:', label)

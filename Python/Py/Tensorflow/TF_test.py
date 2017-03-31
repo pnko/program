@@ -1,4 +1,4 @@
-import tensorflow as tf
+import tensorflow_test as tf
 
 a = tf.constant(10,name="a")
 b = tf.constant(90,name="b")
