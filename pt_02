@@ -1,0 +1,758 @@
+-----DEFECT_IMG_LIST
+
+/* /home/SASDATA/STP/DEFECT_IMG_LIST.sas */
+/* 매크로 변수 설정 */
+%INCLUDE "&STP_HOME.&SEP_DLM.defect_image_function.sas";
+/* 불량 TYPE 구분(CUSTOMER_NAME DEFECT_NAME ) */
+%fun_DEFECT_TYPE_SELECTION;
+
+/* webout data style  */
+%INCLUDE "&STP_HOME.&SEP_DLM.webout_data_style.sas";
+
+/* webout script  */
+DATA _null_;
+    FILE _webout;
+    input line : $32762. ;
+    line = resolve(_infile_) ;
+    put line;
+    cards4 ;
+<script type="text/javascript">
+
+    function form_setting(){
+        var bad_code, true_cnt ;
+        true_cnt = 0;
+        for(var i=0 ; i < document.forms["boxform"].check_list.length ; i++ ){
+            if (document.forms["boxform"].check_list[i].checked == true){
+                if(true_cnt == 0){
+                    bad_code = document.forms["boxform"].check_list[i].value;
+                }else{
+                    bad_code = bad_code +","+document.forms["boxform"].check_list[i].value;
+                }
+                true_cnt = true_cnt + 1;
+            }
+        }
+        document.forms["boxform"].DEFECT_CODE.value =bad_code ;
+        document.forms["boxform"].LOTID.value =document.forms["boxform"].LOTID.value ;
+        document.forms["boxform"].UNIT_RANGE.value =document.forms["boxform"].UNIT_RANGE_ck.value ;
+    }
+
+    function image_submit(){
+        document.forms["boxform"]._program.value="&stp_list_path";
+        document.forms["boxform"].target="_self";
+        form_setting();
+        document.forms["boxform"].submit();
+    }
+
+    function chart_select(cam_no, x, y, bad_name, img_path){
+        if(document.getElementById("X_ck").value=="0" && document.getElementById("Y_ck").value=="0" ){
+            if (document.getElementById(x) == null){
+                add = "<div class='imgbox' id="+x+" onClick='img_remove(id)' >"+bad_name+"<br> <img src="+img_path+" />"+x+","+y+"</div>";
+                defect_img.innerHTML +=add;
+            }else{
+                document.getElementById(x).style.display = "block";
+                document.getElementById(x).style.visibility = "visible";
+            }
+        }else{
+            document.forms["boxform"]._program.value="&stp_detail_path";
+            document.forms["boxform"].target="_blank";
+            document.forms["boxform"].cam_no.value = cam_no;
+            document.forms["boxform"].parm_x.value = x;
+            document.forms["boxform"].parm_y.value = y;
+            document.forms["boxform"].parm_range_x.value = document.getElementById("X_ck").value;
+            document.forms["boxform"].parm_range_y.value = document.getElementById("Y_ck").value;
+            document.forms["boxform"].submit();
+        }
+    }
+
+    function img_remove(id){
+        document.getElementById(id).style.display = "none";
+    }
+
+    function img_link(id, x, y, cam_no, top_bottom, unit_no){
+        document.getElementById(id).style.background ="#CCFFFF";
+        window.open("&stp_point_path","pop", "width=750, height=900, left=650 , toolbar=no, menubar=no, resizable=yes, scrollbars=yes" ) ;
+        document.forms["boxform"]._program.value="&stp_point_path";
+        document.forms["boxform"].target="pop";
+        document.forms["boxform"].parm_x.value = x;
+        document.forms["boxform"].parm_y.value = y;
+        document.forms["boxform"].cam_no.value = cam_no;
+        document.forms["boxform"].unit_no.value = unit_no;
+        document.forms["boxform"].top_bottom.value = top_bottom;
+        document.forms["boxform"].submit();
+    }
+
+</script>
+</head>
+;;;;
+RUN;
+
+/* webout VIEW  */
+DATA _null_;
+    FILE _webout;
+    input line : $32762. ;
+    line = resolve(_infile_) ;
+    put line;
+    cards4 ;
+<body>
+<div id="wrap">
+    <div id="header">
+        <h1> &MACHINE_CODE </h1>
+        <form name="boxform" method="get" action= "&_URL">
+        <input name="_program" value="&_PROGRAM" type="hidden">
+        <input name="MACHINE_CODE" value="&MACHINE_CODE" type="hidden">
+        <input name="LOTID" value="&LOTID" type="hidden">
+        <input name="DEFECT_CODE" value="&DEFECT_CODE" type="hidden">
+        <input name="DEFECT_TYPE" value="&DEFECT_TYPE" type="hidden">
+        <input name="UNIT_RANGE" value="&UNIT_RANGE" type="hidden">
+        <input name="START_DATE" value="&START_DATE" type="hidden">
+        <input name="END_DATE" value="&END_DATE" type="hidden">
+        <input name="unit_no"  type="hidden">
+        <input name="cam_no"  type="hidden">
+        <input name="top_bottom"  type="hidden">
+        <input name="parm_x"  type="hidden">
+        <input name="parm_y"  type="hidden">
+        <input name="parm_range_x" type="hidden">
+        <input name="parm_range_y" type="hidden">
+        <table border="2"  cellspacing="0" cellpadding="0">
+        <tr>
+            <th width=200>LOT</th>
+            <th width=400 colspan="2">불량명</th>
+            <th width=200>Unit범위</th>
+            <th width=100>실행</th>
+        </tr>
+        <tr w>
+            <td><select name="LOTID_ck" >
+                &lot_opt
+                </select>
+            </td>
+            <td>
+                &bad_check1
+            </td>
+            <td>
+                &bad_check2
+            </td>
+            <td><select name="UNIT_RANGE_ck" >
+                <option value="ALL" selected>전체</option>
+                &unit_range_opt
+                </select>
+            </td>
+            <td>
+                <input type="submit" value="Run" onClick ="image_submit()">
+            </td>
+        </from>
+        </tr>
+        </table>
+    </div>
+;;;;
+RUN;
+
+
+
+/* 마지막 코드 */
+DATA _null_;
+  FILE _webout;
+  input line : $32762. ;
+  line = resolve(_infile_) ;
+  put line;
+  cards4 ;
+<div id="defect_img">
+<h3> 불량 상세 이미지 </h3>
+;;;;
+RUN;
+
+
+%MACRO UNIT_RANGE_ALL;
+    /* 불량 이미지 */
+    PROC SQL NOPRINT;
+        CREATE TABLE WORK.IMAGE_URL_DATA AS
+        	SELECT
+                  &g_defect_name
+                , '<div class="list_imgbox"  id="'|| cats(&g_defect_code,image_pos_x) ||'" onClick="img_link('|| cats(&g_defect_code,image_pos_x) ||','|| STRIP(image_pos_x) ||','|| STRIP(image_pos_y) ||','|| STRIP(CAM_NO) ||','''|| STRIP(top_bottom) ||''','''|| STRIP(UNIT_NO) ||''')" > <img src="'|| STRIP(IMG_PATH) ||'" />'|| STRIP(image_pos_x) ||','|| STRIP(image_pos_y) ||'</div>'
+                 AS IMG_LIST
+            FROM WORK.IMAGE_DATA_TEMP
+            WHERE 1=1
+            AND MACHINE_CODE = "&MACHINE_CODE"
+            AND LOTID  = "&LOTID"
+            %IF &UNIT_RANGE ^= ALL %THEN %DO;
+                AND UNIT_RANGE =  "&UNIT_RANGE"
+            %END;
+            AND &g_defect_code IN ( &DEFECT_CODE_LIST)
+            ;
+    QUIT;
+%MEND UNIT_RANGE_ALL;
+%UNIT_RANGE_ALL;
+
+PROC SORT DATA = WORK.IMAGE_URL_DATA ;
+BY &g_defect_name ;
+RUN;
+
+%let col_cnt = 5;
+DATA WORK.IMAGE_URL_DATA_01 ;
+SET WORK.IMAGE_URL_DATA ;
+LENGTH IMG_CNT 8.
+	IMG_TOT_CNT 8.
+    DEFECT_NAME $50.
+    IMG_TOT  $10.
+;
+BY &g_defect_name ;
+
+RETAIN IMG_CNT .
+			IMG_TOT_CNT .
+;
+
+IF FIRST.&g_defect_name THEN DO;
+	IMG_CNT= 1;
+	IMG_TOT_CNT = 1;
+END;
+
+ELSE DO;
+	IF MOD(	IMG_CNT,&col_cnt ) = 0 THEN DO;
+	   IMG_CNT = 1;
+	   IMG_TOT_CNT = IMG_TOT_CNT + 1;
+	END;
+	ELSE DO;
+		IMG_CNT=IMG_CNT+1;
+	END;
+END;
+
+IF IMG_TOT_CNT < 10 THEN DO;
+    IMG_TOT = CATS("00",IMG_TOT_CNT);
+END;
+ELSE IF IMG_TOT_CNT >= 10 AND IMG_TOT_CNT < 100 THEN DO;
+    IMG_TOT = CATS("0",IMG_TOT_CNT);
+END;
+ELSE DO;
+    IMG_TOT = COMPRESS(IMG_TOT_CNT);
+END;
+DEFECT_NAME = CAT(TRIM(&g_defect_name),"_", TRIM(IMG_TOT));
+
+
+DROP
+    CHANGE_DEFECT_NAME
+    IMG_TOT
+;
+
+RUN;
+
+PROC SORT DATA=WORK.IMAGE_URL_DATA_01  ;
+BY  DEFECT_NAME  IMG_CNT   ;
+RUN;
+
+PROC TRANSPOSE DATA=WORK.IMAGE_URL_DATA_01  OUT = WORK.IMAGE_URL_DATA_GROUP(DROP=_NAME_ _LABEL_) LET ;
+BY  DEFECT_NAME ;
+ID IMG_CNT ;
+VAR IMG_LIST;
+RUN;
+
+DATA WORK.IMAGE_URL_DATA_GROUP ;
+SET WORK.IMAGE_URL_DATA_GROUP ;
+    DEFECT_NAME = SCAN(DEFECT_NAME, 1, "_");
+LABEL
+    DEFECT_NAME = "불량명"
+    '1'n = "Image"
+    '2'n = "Image"
+    '3'n = "Image"
+    '4'n = "Image"
+    '5'n = "Image"
+;
+RUN;
+
+/*파일 크기 별로 2개 데이터로 분리 */
+DATA IMAGE_URL_DATA_GROUP_01 IMAGE_URL_DATA_GROUP_02;
+SET IMAGE_URL_DATA_GROUP ;
+	IF MOD(_N_,2) = 1 THEN OUTPUT IMAGE_URL_DATA_GROUP_01 ;
+	ELSE OUTPUT IMAGE_URL_DATA_GROUP_02;
+RUN;
+
+options odsstyle=Sapphire;
+%STPBEGIN;
+
+
+PROC REPORT DATA=WORK.IMAGE_URL_DATA_GROUP;
+    column 	DEFECT_NAME	'1'n '2'n '3'n '4'n '5'n ;
+    define DEFECT_NAME / order ;
+RUN;
+
+
+ods _all_ close;
+%STPEND;
+
+
+/* 마지막 코드 */
+DATA _null_;
+  FILE _webout;
+  input line : $32762. ;
+  line = resolve(_infile_) ;
+  put line;
+  cards4 ;
+</div>
+</div>
+</body>
+</html>
+;;;;
+RUN;
+
+
+
+----- CANDIDATE_POINT_IMG_LIST
+%INCLUDE "&STP_HOME.&SEP_DLM.stp_autoexec.sas";
+
+/* 기준 데이터 생성 */
+DATA _NULL_;
+    IF &cam_no < 10 THEN DO;
+        CAM_NO = CATS("0",&cam_no);
+    END;
+    ELSE DO;
+        CAM_NO = COMPRESS(&cam_no);
+    END;
+    CALL SYMPUTX("CAM_NO", CAM_NO);
+RUN;
+
+%PUT parm_x = &parm_x;
+%PUT parm_y = &parm_y;
+
+
+%MACRO CANDIDATE_POINT_DATA;
+    %IF "&MACHINE_CODE" ="PAOI_01" %THEN %DO;
+        PROC SQL NOPRINT;
+            CREATE TABLE WORK.T_M_DEFECTIMAGE_POINT AS
+                SELECT
+                      MACHINE_CODE
+                    , LOTID
+                    , REWORK_CNT
+                    , DEFECT_NAME
+                    , MODEL_ROW
+                    , CAM_NO
+                    , UNIT_NO
+                    , TOP_BOTTOM
+                    , IMAGE_POS_X
+                    , IMAGE_POS_Y
+                    , IMAGE_FILENAME
+                    , VERIFY_DONE
+                FROM MRT_DATA.T_M_DEFECTIMAGEINFO_MPH3AJ2AA
+                WHERE
+                    MACHINE_CODE IN ("DAOI_01","&MACHINE_CODE")
+                    AND LOTID  = "&LOTID"
+                    AND UNIT_NO = "&UNIT_NO"
+                    /*AND TOP_BOTTOM = "&TOP_BOTTOM"*/
+                ;
+        QUIT;
+    %END;
+    %ELSE %DO;
+        PROC SQL NOPRINT;
+            CREATE TABLE WORK.T_M_DEFECTIMAGE_POINT AS
+                SELECT
+                      MACHINE_CODE
+                    , LOTID
+                    , REWORK_CNT
+                    , DEFECT_NAME
+                    , MODEL_ROW
+                    , CAM_NO
+                    , UNIT_NO
+                    , TOP_BOTTOM
+                    , IMAGE_POS_X
+                    , IMAGE_POS_Y
+                    , IMAGE_FILENAME
+                    , VERIFY_DONE
+                FROM MRT_DATA.T_M_DEFECTIMAGEINFO_MPH3AJ2AA
+                WHERE
+                    MACHINE_CODE = "&MACHINE_CODE"
+                    AND LOTID  = "&LOTID"
+                    AND UNIT_NO = "&UNIT_NO"
+                    /*AND TOP_BOTTOM = "&TOP_BOTTOM"*/
+                ;
+        QUIT;
+    %END;
+
+%MEND CANDIDATE_POINT_DATA;
+%CANDIDATE_POINT_DATA;
+
+DATA WORK.M_DEFECTIMAGE_URL(KEEP=MACHINE_CODE DEFECT_NAME MODEL_ROW CAM_NO UNIT_NO TOP_BOTTOM REWORK_CNT VERIFY_DONE  IMG_LIST IMAGE_POS_X IMAGE_POS_Y) ;
+SET WORK.T_M_DEFECTIMAGE_POINT;
+LENGTH IMG_PATH $250. MACHINE_NAME $100. ;
+
+    MACHINE_NAME = SCAN(MACHINE_CODE, 1, "_");
+    IF MACHINE_NAME ^= "AVI" THEN DO;
+        MACHINE_NAME = CATS(SUBSTR(MACHINE_NAME,1,1),"-",SUBSTR(MACHINE_NAME,2)) ;
+    END;
+
+    IF LOTID = "MPH3AJ2AA" THEN DO;
+        IMG_PATH = cat("&img_base_url",trim(MACHINE_NAME),"/",trim(LOTID),"/",urlencode(trim(IMAGE_FILENAME)),".jpg") ;
+    END ;
+    ELSE DO;
+        IMG_PATH = cats("&img_url",int(ranuni(0) * 4+1 ),".png") ;
+    END;
+    IMG_LIST = '<div class="imgbox" > <img src="'|| STRIP(IMG_PATH) ||'" /><br>'|| STRIP(image_pos_x) ||','|| STRIP(image_pos_y) ||'</div>';
+LABEL
+    MACHINE_CODE='검사공정'
+    REWORK_CNT='LOT/차수'
+    UNIT_NO='Unit번호'
+    CAM_NO='카메라/번호'
+    DEFECT_NAME='불량명'
+    MODEL_ROW='열/(A,B,C)'
+    TOP_BOTTOM='TOP / BOTTOM'
+    IMG_LIST='불량이미지'
+    VERIFY_DONE='VERIFY/DONE'
+    ;
+RUN;
+
+
+
+PROC SORT DATA = WORK.M_DEFECTIMAGE_URL ;
+BY DEFECT_NAME ;
+RUN;
+
+options odsstyle=Sapphire;
+*options odsstyle=meadow;
+%STPBEGIN;
+
+proc report data=M_DEFECTIMAGE_URL;
+/*
+style(report)=[cellspacing=5 borderwidth=10 bordercolor=blue]
+style(header)=[color=yellow
+               fontstyle=italic fontsize=6]
+style(column)=[color=moderate brown
+               fontfamily=helvetica fontsize=4]
+style(lines)=[color=white backgroundcolor=black
+              fontstyle=italic fontweight=bold fontsize=5];*/
+    column MACHINE_CODE	UNIT_NO REWORK_CNT MODEL_ROW CAM_NO TOP_BOTTOM DEFECT_NAME  IMAGE_POS_X IMAGE_POS_Y	VERIFY_DONE	IMG_LIST comment ;
+    define MACHINE_CODE / order ;
+    define MACHINE_CODE / style(column)=[cellwidth=1in];
+    define REWORK_CNT / style(column)=[cellwidth=.5in];
+    define VERIFY_DONE / style(column)=[cellwidth=.5in];
+    define IMAGE_POS_X / noprint;
+    define IMAGE_POS_Y / noprint;
+    define comment / noprint;
+    compute comment / char length=40;
+        if VERIFY_DONE = 'Y'
+        then comment='ok';
+        else comment=' ';
+    endcomp;
+    compute VERIFY_DONE;
+        if VERIFY_DONE = 'Y' and IMAGE_POS_X="&parm_x" and IMAGE_POS_Y="&parm_y" then do;
+            call define('MACHINE_CODE', "style", "style=[backgroundcolor=yellow fontfamily=helvetica fontweight=bold]");
+            call define('REWORK_CNT', "style", "style=[backgroundcolor=yellow fontfamily=helvetica fontweight=bold]");
+            call define('DEFECT_NAME', "style", "style=[backgroundcolor=yellow fontfamily=helvetica fontweight=bold]");
+            call define('MODEL_ROW', "style", "style=[backgroundcolor=yellow fontfamily=helvetica fontweight=bold]");
+            call define('UNIT_NO', "style", "style=[backgroundcolor=yellow fontfamily=helvetica fontweight=bold]");
+            call define('CAM_NO', "style", "style=[backgroundcolor=yellow fontfamily=helvetica fontweight=bold]");
+            call define('TOP_BOTTOM', "style", "style=[backgroundcolor=yellow fontfamily=helvetica fontweight=bold]");
+            call define('VERIFY_DONE', "style", "style=[backgroundcolor=yellow fontfamily=helvetica fontweight=bold]");
+            call define('IMG_LIST', "style", "style=[backgroundcolor=yellow fontfamily=helvetica fontweight=bold]");
+    /*	call define('MACHINE_CODE', "style", "style=[background=cyan]");*/
+        end;
+    endcomp;
+run;
+/*
+PROC PRINT DATA=WORK.M_DEFECTIMAGE_URL NOOBS;
+RUN;
+*/
+
+ods _all_ close;
+%STPEND;
+
+
+
+--------------anter
+/* 매크로 변수 설정 */
+%INCLUDE "&STP_HOME.&SEP_DLM.defect_image_function.sas";
+/* 불량 TYPE 구분(CUSTOMER_NAME DEFECT_NAME ) */
+%fun_DEFECT_TYPE_SELECTION;
+
+/* webout data style  */
+%INCLUDE "&STP_HOME.&SEP_DLM.webout_data_style.sas";
+
+DATA _NULL_ ;
+    CDAY = PUT(DATE(), YYMMDDN8.);
+    CTIME = INT(TIME());
+    HTML_LINK = CATS("http://litatsm01pjt:7980/working/defectImg_", CDAY,"_",CTIME,".html");
+    HTML_FOLDER = CATS("/SASDATA/PGM/work/defectImg_", CDAY,"_",CTIME,".html");
+    CALL SYMPUT("HTML_LINK", HTML_LINK);
+    CALL SYMPUT("HTML_FOLDER", HTML_FOLDER);
+RUN;
+%PUT HTML_LINK = &HTML_LINK;
+%PUT HTML_FOLDER = &HTML_FOLDER;
+
+
+/* webout script  */
+DATA _null_;
+    FILE _webout;
+    input line : $32762. ;
+    line = resolve(_infile_) ;
+    put line;
+    cards4 ;
+<script type="text/javascript">
+
+    function form_setting(){
+        var bad_code, true_cnt ;
+        true_cnt = 0;
+        for(var i=0 ; i < document.forms["boxform"].check_list.length ; i++ ){
+            if (document.forms["boxform"].check_list[i].checked == true){
+                if(true_cnt == 0){
+                    bad_code = document.forms["boxform"].check_list[i].value;
+                }else{
+                    bad_code = bad_code +","+document.forms["boxform"].check_list[i].value;
+                }
+                true_cnt = true_cnt + 1;
+            }
+        }
+        document.forms["boxform"].DEFECT_CODE.value =bad_code ;
+        alert(document.forms["boxform"].check_list[0].value);
+        alert(bad_code);
+        document.forms["boxform"].LOTID.value =document.forms["boxform"].LOTID.value ;
+        document.forms["boxform"].UNIT_RANGE.value =document.forms["boxform"].UNIT_RANGE_ck.value ;
+    }
+
+    function image_submit(){
+        document.forms["boxform"]._program.value="&stp_list_path";
+        document.forms["boxform"].target="_self";
+        form_setting();
+        document.forms["boxform"].submit();
+    }
+
+    function chart_select(cam_no, x, y, bad_name, img_path){
+        if(document.getElementById("X_ck").value=="0" && document.getElementById("Y_ck").value=="0" ){
+            if (document.getElementById(x) == null){
+                add = "<div class='imgbox' id="+x+" onClick='img_remove(id)' >"+bad_name+"<br> <img src="+img_path+" />"+x+","+y+"</div>";
+                defect_img.innerHTML +=add;
+            }else{
+                document.getElementById(x).style.display = "block";
+                document.getElementById(x).style.visibility = "visible";
+            }
+        }else{
+            document.forms["boxform"]._program.value="&stp_detail_path";
+            document.forms["boxform"].target="_blank";
+            document.forms["boxform"].cam_no.value = cam_no;
+            document.forms["boxform"].parm_x.value = x;
+            document.forms["boxform"].parm_y.value = y;
+            document.forms["boxform"].parm_range_x.value = document.getElementById("X_ck").value;
+            document.forms["boxform"].parm_range_y.value = document.getElementById("Y_ck").value;
+            document.forms["boxform"].submit();
+        }
+    }
+
+    function img_remove(id){
+        document.getElementById(id).style.display = "none";
+    }
+
+    function img_link(x, y, cam_no, top_bottom, unit_no){
+        document.forms["boxform"]._program.value="&stp_point_path";
+        document.forms["boxform"].target="pointframe";
+        document.forms["boxform"].parm_x.value = x;
+        document.forms["boxform"].parm_y.value = y;
+        document.forms["boxform"].cam_no.value = cam_no;
+        document.forms["boxform"].unit_no.value = unit_no;
+        document.forms["boxform"].top_bottom.value = top_bottom;
+        document.forms["boxform"].submit();
+    }
+
+</script>
+</head>
+;;;;
+RUN;
+
+/* webout VIEW  */
+DATA _null_;
+    FILE _webout;
+    input line : $32762. ;
+    line = resolve(_infile_) ;
+    put line;
+    cards4 ;
+<body>
+<div id="wrap">
+    <div id="header">
+        <h1> &MACHINE_CODE </h1>
+        <form name="boxform" method="get" action= "&_URL">
+        <input name="_program" value="&_PROGRAM" type="hidden">
+        <input name="MACHINE_CODE" value="&MACHINE_CODE" type="hidden">
+        <input name="LOTID" value="&LOTID" type="hidden">
+        <input name="DEFECT_CODE" value="&DEFECT_CODE" type="hidden">
+        <input name="DEFECT_TYPE" value="&DEFECT_TYPE" type="hidden">
+        <input name="UNIT_RANGE" value="&UNIT_RANGE" type="hidden">
+        <input name="START_DATE" value="&START_DATE" type="hidden">
+        <input name="END_DATE" value="&END_DATE" type="hidden">
+        <input name="unit_no"  type="hidden">
+        <input name="cam_no"  type="hidden">
+        <input name="top_bottom"  type="hidden">
+        <input name="parm_x"  type="hidden">
+        <input name="parm_y"  type="hidden">
+        <input name="parm_range_x" type="hidden">
+        <input name="parm_range_y" type="hidden">
+        <table border="2"  cellspacing="0" cellpadding="0">
+        <tr>
+            <th width=200>LOT</th>
+            <th width=400 colspan="2">불량명</th>
+            <th width=200>Unit범위</th>
+            <th width=100>실행</th>
+        </tr>
+        <tr w>
+            <td><select name="LOTID_ck" >
+                &lot_opt
+                </select>
+            </td>
+            <td>
+                &bad_check1
+            </td>
+            <td>
+                &bad_check2
+            </td>
+            <td><select name="UNIT_RANGE_ck" >
+                &unit_range_opt
+                </select>
+            </td>
+            <td>
+                <input type="submit" value="Run" onClick ="image_submit()">
+            </td>
+        </from>
+        </tr>
+        </table>
+    </div>
+	<div style="display:inline">
+        <select id="X_ck" >
+            <option value="0" selected> X범위 선택</option>
+            <option value="1000">1000</option>
+            <option value="2000">2000</option>
+            <option value="3000">3000</option>
+        </select>
+        <select id="Y_ck" >
+            <option value="0" selected> Y범위 선택</option>
+            <option value="1000">1000</option>
+            <option value="2000">2000</option>
+            <option value="3000">3000</option>
+        </select>
+	</div>
+;;;;
+RUN;
+
+
+
+/* 마지막 코드 */
+DATA _null_;
+  FILE _webout;
+  input line : $32762. ;
+  line = resolve(_infile_) ;
+  put line;
+  cards4 ;
+<div id="defect_img">
+<h3> 불량 상세 이미지 </h3>
+<iframe id="defect_img" src="&HTML_LINK">
+;;;;
+RUN;
+
+
+/* 불량 이미지 */
+PROC SQL NOPRINT;
+    CREATE TABLE WORK.IMAGE_URL_DATA AS
+    	SELECT
+              &g_defect_name
+            , '<div class="imgbox" onClick="parent.img_link('|| STRIP(image_pos_x) ||','|| STRIP(image_pos_y) ||','|| STRIP(CAM_NO) ||','''|| STRIP(top_bottom) ||''','''|| STRIP(UNIT_NO) ||''')" > <img src="'|| STRIP(IMG_PATH) ||'" />'|| STRIP(image_pos_x) ||','|| STRIP(image_pos_y) ||'</div>'
+             AS IMG_LIST
+        FROM WORK.IMAGE_DATA_TEMP
+        WHERE 1=1
+        AND MACHINE_CODE = "&MACHINE_CODE"
+        AND LOTID  = "&LOTID"
+        AND UNIT_RANGE =  "&UNIT_RANGE"
+        AND &g_defect_code IN ( &DEFECT_CODE_LIST)
+        ;
+QUIT;
+
+PROC SORT DATA = WORK.IMAGE_URL_DATA ;
+BY &g_defect_name ;
+RUN;
+
+%let col_cnt = 5;
+DATA WORK.IMAGE_URL_DATA_01 ;
+SET WORK.IMAGE_URL_DATA ;
+LENGTH IMG_CNT 8.
+	IMG_TOT_CNT 8.
+    DEFECT_NAME $50.
+    IMG_TOT  $10.
+;
+BY CHANGE_DEFECT_NAME ;
+
+RETAIN IMG_CNT .
+			IMG_TOT_CNT .
+;
+
+IF FIRST.CHANGE_DEFECT_NAME THEN DO;
+	IMG_CNT= 1;
+	IMG_TOT_CNT = 1;
+END;
+
+ELSE DO;
+	IF MOD(	IMG_CNT,&col_cnt ) = 0 THEN DO;
+	   IMG_CNT = 1;
+	   IMG_TOT_CNT = IMG_TOT_CNT + 1;
+	END;
+	ELSE DO;
+		IMG_CNT=IMG_CNT+1;
+	END;
+END;
+
+IF IMG_TOT_CNT < 10 THEN DO;
+    IMG_TOT = CATS("00",IMG_TOT_CNT);
+END;
+ELSE IF IMG_TOT_CNT >= 10 AND IMG_TOT_CNT < 100 THEN DO;
+    IMG_TOT = CATS("0",IMG_TOT_CNT);
+END;
+ELSE DO;
+    IMG_TOT = COMPRESS(IMG_TOT_CNT);
+END;
+DEFECT_NAME = CAT(TRIM(CHANGE_DEFECT_NAME),"_", TRIM(IMG_TOT));
+
+
+DROP
+    CHANGE_DEFECT_NAME
+    IMG_TOT
+;
+
+RUN;
+
+PROC SORT DATA=WORK.IMAGE_URL_DATA_01  ;
+BY  DEFECT_NAME  IMG_CNT   ;
+RUN;
+
+PROC TRANSPOSE DATA=WORK.IMAGE_URL_DATA_01  OUT = WORK.IMAGE_URL_DATA_GROUP(DROP=_NAME_ _LABEL_) LET ;
+BY  DEFECT_NAME ;
+ID IMG_CNT ;
+VAR IMG_LIST;
+RUN;
+
+
+/*파일 크기 별로 2개 데이터로 분리 */
+DATA IMAGE_URL_DATA_GROUP_01 IMAGE_URL_DATA_GROUP_02;
+SET IMAGE_URL_DATA_GROUP ;
+	IF MOD(_N_,2) = 1 THEN OUTPUT IMAGE_URL_DATA_GROUP_01 ;
+	ELSE OUTPUT IMAGE_URL_DATA_GROUP_02;
+RUN;
+
+options odsstyle=Sapphire;
+%STPBEGIN;
+ods html file ="&HTML_FOLDER";
+PROC PRINT DATA=WORK.IMAGE_URL_DATA_GROUP ;
+RUN;
+
+
+ods _all_ close;
+%STPEND;
+
+
+/* 마지막 코드 */
+DATA _null_;
+  FILE _webout;
+  input line : $32762. ;
+  line = resolve(_infile_) ;
+  put line;
+  cards4 ;
+</iframe>
+</div>
+<h3> 후보점 이미지 </h3>
+<iframe id="point_img" name="pointframe">
+
+</iframe>
+</div>
+</body>
+</html>
+;;;;
+RUN;
+
