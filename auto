@@ -1,0 +1,30 @@
+----stp_autoexec
+%GLOBAL g_defect_name g_defect_code hostname;
+
+%MACRO SERVER_TYPE ;
+    %IF "&SERVER_TYPE" = "1" %THEN %DO;
+        %LET hostname = http://litatqa01gmp ;
+    %END ;
+
+    %ELSE %DO;
+        %LET hostname = http://litatsm01pjt ;
+    %END ;
+
+%MEND SERVER_TYPE ;
+%SERVER_TYPE ;
+
+%LET sas_url = &hostname:8080;
+%LET stp_url = &hostname:7980;
+%LET img_url = &stp_url/SASLogon/img/df_0 ;
+%LET img_base_url = &stp_url/mdimg/;
+%LET model_base_url = &stp_url/mdimg/REF/ ;
+%LET model_img_path = &stp_url/SASLogon/img/CAM ;
+%LET model_img_path = &stp_url/SASLogon/img/CAM ;
+
+%LET stp_meta_path = /LGI_QAMS/02.JOBS/02.STP ;
+%LET stp_search_path = &stp_meta_path/DEFECT_IMG_SEARCH;
+%LET stp_list_path = &stp_meta_path/DEFECT_IMG_LIST;
+%LET stp_detail_path = &stp_meta_path/DEFECT_IMG_DETAIL ;
+%LET stp_point_path = &stp_meta_path/CANDIDATE_POINT_IMG_LIST;
+%LET stp_matimg_path = &stp_meta_path/INSP_MATCHING_IMG_LIST;
+%LET stp_msearch_path = &stp_meta_path/INSP_MATCHING_SEARCH;
