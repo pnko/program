@@ -3,11 +3,11 @@
 
 %MACRO SERVER_TYPE ;
     %IF "&SERVER_TYPE" = "1" %THEN %DO;
-        %LET hostname = http://litatqa01gmp ;
+        %LET hostname = http://ourdad ;
     %END ;
 
     %ELSE %DO;
-        %LET hostname = http://litatsm01pjt ;
+        %LET hostname = http://ourdad ;
     %END ;
 
 %MEND SERVER_TYPE ;
