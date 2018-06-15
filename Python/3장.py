@@ -128,5 +128,116 @@ book_stack['value'] = book_stack['value'].astype(int)
 #sns.pointplot(x="level_0", y="value", hue ="level_1", data=book_stack)
 
 
+## 3-2 데이터 베이스(P129(148))
+: SQLite - 가볍게 파일 하나로 사용할 수 있는 데이터베이스, 웹 브라우저 내부 및 안드로이드/IOS에서 표준으로 제공되는 데이터베이스 
 
     
+import sqlite3
+
+# 데이터 베이스 연결
+dbpath = "test.sqlite"
+conn = sqlite3.connect(dbpath)
+
+# 테이블 생성하고 데이터 넣기
+cur = conn.cursor()
+# 여러 문장 실행시 executescript
+cur.executescript("""
+    DROP TABLE IF EXISTS items;
+    
+    CREATE TABLE items(
+        item_id INTEGER PRIMARY KEY,
+        name TEXT UNIQUE,
+        price INTEGER
+        ) ;
+
+    INSERT INTO items(name, price) VALUES('Apple', 800);
+    INSERT INTO items(name, price) VALUES('Orange', 780);
+    INSERT INTO items(name, price) VALUES('Banana', 430);
+
+""")
+conn.commit() # 반영
+
+# 한문장 실행시 execute
+cur.execute("SELECT item_id, name, price FROM items")
+# 전체를 추출할때 (fetchall), 한개씩 추출할때(fatchone)
+item_list = cur.fetchall()
+
+item_list 
+
+for it in item_list :
+    print(it)
+  
+  
+# sqlite3 샘플 2
+import sqlite3 
+
+filepath ="test2.sqlite"
+conn = sqlite3.connect(filepath)
+
+cur = conn.cursor()
+cur.execute("DROP TABLE IF EXISTS items")
+cur.execute("""CREATE TABLE items(
+        item_id INTEGER PRIMARY KEY,
+        name TEXT ,
+        price INTEGER)""")
+conn.commit()
+
+#데이터 넣기 
+cur = conn.cursor()
+cur.execute("INSERT INTO items (name, price) VALUES (?,?)",("Orange", 5200))
+conn.commit()
+
+cur = conn.cursor()
+data = [("Mango", 7700), ("Kiwi", 4000), ("Grape", 8000),
+       ("Peach",9400), ("Persimmon", 7000), ("Banana", 4000)]
+cur.executemany(
+        "INSERT INTO items(name, price) VALUES(?,?)", data)
+conn.commit()
+
+# 4000 - 7000원 데이터 추출하기 
+cur =conn.cursor()
+price_range = (4000, 7000)
+cur.execute("SELECT * FROM items WHERE PRICE >= ? AND PRICE <= ?", price_range) #?로 선언하면, 두번째 값이 매개변수에서 실제 값을 지정
+fr_list = cur.fetchall()
+for fr in fr_list:
+    print(fr)
+    
+   
+### MySQL 사용하기
+# MySQL Clint 설치 필요
+import MySQLdb
+
+# MySQL 연결
+conn = MySQLdb.connect(
+    user ='root',
+    passwd='test-password',
+    host='localhost',
+    db='test')
+
+# 커서 추출하기
+cur = conn.cursor()
+
+#테이블 생성
+cur.execute('DROP TABLE items')
+cur.execute("""
+        CREATE TABLE items (
+            item_id INTEGER PRIMARY KEY AUTO_INCREMENT,
+            name TEXT,
+            price INTEGER
+            )
+""")
+
+# 데이터 추가하기
+data = [("Mango", 7700), ("Kiwi", 4000), ("Grape", 8000),
+       ("Peach",9400), ("Persimmon", 7000), ("Banana", 4000)]
+for i in data :
+    cur.execute("INSERT INTO items(name,price) VALUES(%s, %s)", i)
+    
+# 데이터 추출하기
+cur.execute("SELECT * FROM items")
+for row in cur.fetchall():
+    print(row)
+    
+    
+
+
